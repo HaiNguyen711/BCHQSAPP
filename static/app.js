@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await bootFormPage();
   }
   if (page === "admin") {
-    bootAdminPage();
+    await bootAdminPage();
   }
 });
 
@@ -244,34 +244,144 @@ async function submitForm() {
   renderForm();
 }
 
-function bootAdminPage() {
-  document.getElementById("loadAdminBtn").addEventListener("click", loadAdminData);
+async function bootAdminPage() {
+  document.getElementById("loginAdminBtn").addEventListener("click", loginAdmin);
+  document.getElementById("refreshAdminBtn").addEventListener("click", loadAdminData);
+  document.getElementById("logoutAdminBtn").addEventListener("click", logoutAdmin);
   document.getElementById("exportBtn").addEventListener("click", exportCsv);
+  document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
+
+  const response = await fetch("/api/admin/session");
+  const session = await response.json();
+  if (session.authenticated) {
+    showAdminDashboard();
+    await loadAdminData();
+  } else {
+    showAdminLogin();
+  }
 }
 
-async function loadAdminData() {
-  const token = document.getElementById("adminToken").value.trim();
-  const messageEl = document.getElementById("adminMessage");
-  const tableWrap = document.getElementById("adminTableWrap");
+function showAdminLogin() {
+  document.getElementById("adminLoginCard").hidden = false;
+  document.getElementById("adminDashboardCard").hidden = true;
+}
 
-  messageEl.textContent = "Đang tải dữ liệu...";
+function showAdminDashboard() {
+  document.getElementById("adminLoginCard").hidden = true;
+  document.getElementById("adminDashboardCard").hidden = false;
+}
+
+async function loginAdmin() {
+  const token = document.getElementById("adminToken").value.trim();
+  const messageEl = document.getElementById("adminLoginMessage");
+
+  messageEl.textContent = "Đang đăng nhập...";
   messageEl.className = "form-message";
 
-  const response = await fetch("/api/admin/submissions", {
-    headers: { "X-Admin-Token": token },
+  const response = await fetch("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
   });
-
   const result = await response.json();
   if (!response.ok) {
-    tableWrap.innerHTML = "";
-    messageEl.textContent = result.error || "Không thể tải dữ liệu.";
+    messageEl.textContent = result.error || "Không thể đăng nhập.";
     messageEl.classList.add("is-error");
     return;
   }
 
-  messageEl.textContent = `Đã tải ${result.items.length} phiếu.`;
+  messageEl.textContent = result.message;
   messageEl.classList.add("is-success");
-  tableWrap.innerHTML = renderAdminTable(result.items);
+  showAdminDashboard();
+  await loadAdminData();
+}
+
+async function logoutAdmin() {
+  await fetch("/api/admin/logout", { method: "POST" });
+  document.getElementById("adminToken").value = "";
+  document.getElementById("adminLoginMessage").textContent = "";
+  document.getElementById("adminMessage").textContent = "";
+  document.getElementById("adminTableWrap").innerHTML = "";
+  document.getElementById("adminSummaryCards").innerHTML = "";
+  document.getElementById("adminSummaryLists").innerHTML = "";
+  showAdminLogin();
+}
+
+async function loadAdminData() {
+  const messageEl = document.getElementById("adminMessage");
+  const tableWrap = document.getElementById("adminTableWrap");
+
+  messageEl.textContent = "Đang tải dữ liệu quản trị...";
+  messageEl.className = "form-message";
+
+  const [summaryResponse, submissionsResponse] = await Promise.all([
+    fetch("/api/admin/summary"),
+    fetch("/api/admin/submissions"),
+  ]);
+
+  if (summaryResponse.status === 401 || submissionsResponse.status === 401) {
+    showAdminLogin();
+    messageEl.textContent = "";
+    return;
+  }
+
+  const summary = await summaryResponse.json();
+  const submissions = await submissionsResponse.json();
+
+  document.getElementById("adminSummaryCards").innerHTML = renderSummaryCards(summary);
+  document.getElementById("adminSummaryLists").innerHTML = renderSummaryLists(summary);
+  tableWrap.innerHTML = renderAdminTable(submissions.items || []);
+
+  messageEl.textContent = `Đã tải ${submissions.items.length} phiếu.`;
+  messageEl.className = "form-message is-success";
+}
+
+function renderSummaryCards(summary) {
+  const cards = [
+    { label: "Tổng số phiếu", value: summary.total_submissions || 0 },
+    { label: "Phiếu hôm nay", value: summary.today_submissions || 0 },
+    { label: "CCCD duy nhất", value: summary.unique_citizen_ids || 0 },
+  ];
+
+  return cards.map((card) => `
+    <div class="stat-card">
+      <div class="stat-card__label">${escapeHtml(card.label)}</div>
+      <div class="stat-card__value">${escapeHtml(card.value)}</div>
+    </div>
+  `).join("");
+}
+
+function renderSummaryLists(summary) {
+  const groups = [
+    { title: "Top tỉnh/thành", items: summary.top_provinces || [] },
+    { title: "Top phường", items: summary.top_wards || [] },
+    { title: "Top nghề nghiệp", items: summary.top_occupations || [] },
+    { title: "Top trình độ đào tạo", items: summary.top_training_levels || [] },
+  ];
+
+  return groups.map((group) => `
+    <div class="summary-card">
+      <h3>${escapeHtml(group.title)}</h3>
+      ${renderSummaryListItems(group.items)}
+    </div>
+  `).join("");
+}
+
+function renderSummaryListItems(items) {
+  if (!items.length) {
+    return "<p>Chưa có dữ liệu.</p>";
+  }
+
+  return `
+    <ul class="summary-list">
+      ${items.map((item) => `
+        <li>
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.count)}</strong>
+        </li>
+      `).join("")}
+    </ul>
+  `;
 }
 
 function renderAdminTable(items) {
@@ -285,6 +395,8 @@ function renderAdminTable(items) {
       <td>${escapeHtml(item.full_name)}</td>
       <td>${escapeHtml(item.citizen_id_number)}</td>
       <td>${escapeHtml(item.phone || "")}</td>
+      <td>${escapeHtml(item.payload?.personal_basic?.province || "")}</td>
+      <td>${escapeHtml(item.payload?.personal_basic?.ward || "")}</td>
       <td>${escapeHtml(item.current_residence || "")}</td>
       <td>${escapeHtml(item.created_at)}</td>
       <td><pre>${escapeHtml(JSON.stringify(item.payload, null, 2))}</pre></td>
@@ -299,6 +411,8 @@ function renderAdminTable(items) {
           <th>Họ tên</th>
           <th>CCCD</th>
           <th>Điện thoại</th>
+          <th>Tỉnh/Thành</th>
+          <th>Phường</th>
           <th>Nơi ở hiện tại</th>
           <th>Thời gian tạo</th>
           <th>Dữ liệu</th>
@@ -310,14 +424,11 @@ function renderAdminTable(items) {
 }
 
 function exportCsv() {
-  const token = document.getElementById("adminToken").value.trim();
-  if (!token) {
-    const messageEl = document.getElementById("adminMessage");
-    messageEl.textContent = "Vui lòng nhập admin token trước khi xuất CSV.";
-    messageEl.className = "form-message is-error";
-    return;
-  }
-  window.location.href = `/api/admin/export.csv?token=${encodeURIComponent(token)}`;
+  window.location.href = "/api/admin/export.csv";
+}
+
+function exportExcel() {
+  window.location.href = "/api/admin/export.xlsx";
 }
 
 function escapeHtml(value) {

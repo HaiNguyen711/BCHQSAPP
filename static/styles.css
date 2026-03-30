@@ -148,6 +148,16 @@ body {
   color: #fff4ef;
 }
 
+.hero__admin-link {
+  margin-top: 18px;
+}
+
+.hero__admin-btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
 .hero__visual {
   position: relative;
   display: grid;
@@ -366,6 +376,69 @@ textarea {
   overflow: auto;
 }
 
+.stats-grid,
+.summary-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.stats-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stat-card,
+.summary-card {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fffefe, #fff6f5);
+  padding: 18px;
+}
+
+.stat-card__label {
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.stat-card__value {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--primary-strong);
+}
+
+.summary-card h3 {
+  margin: 0 0 12px;
+}
+
+.summary-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.summary-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.summary-list li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.admin-toolbar--actions {
+  margin-bottom: 16px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -430,6 +503,11 @@ pre {
   .card__actions,
   .admin-toolbar {
     width: 100%;
+  }
+
+  .stats-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
   }
 
   .card__actions button,

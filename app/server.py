@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import mimetypes
 from http import HTTPStatus
+from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -20,8 +23,10 @@ from .config import (
     STATIC_DIR,
     TEMPLATE_DIR,
 )
-from .database import export_csv, init_db, list_submissions, save_submission
+from .database import export_csv, export_excel, init_db, list_submissions, save_submission, summarize_submissions
 from .schema import load_schema
+
+SESSION_COOKIE_NAME = "bchqs_admin_session"
 
 
 def render_template(name: str, context: dict[str, str]) -> bytes:
@@ -49,11 +54,20 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/healthz":
             self._send_json({"status": "ok"})
             return
+        if path == "/api/admin/session":
+            self._send_json({"authenticated": self._is_admin(parsed.query)})
+            return
         if path == "/api/admin/submissions":
             if not self._is_admin(parsed.query):
                 self._send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
                 return
             self._send_json({"items": list_submissions()})
+            return
+        if path == "/api/admin/summary":
+            if not self._is_admin(parsed.query):
+                self._send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
+                return
+            self._send_json(summarize_submissions())
             return
         if path == "/api/admin/export.csv":
             if not self._is_admin(parsed.query):
@@ -67,6 +81,21 @@ class AppHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(csv_text)
             return
+        if path == "/api/admin/export.xlsx":
+            if not self._is_admin(parsed.query):
+                self.send_error(HTTPStatus.UNAUTHORIZED)
+                return
+            content = export_excel()
+            self.send_response(HTTPStatus.OK)
+            self.send_header(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+            self.send_header("Content-Disposition", 'attachment; filename="bchqs-submissions.xlsx"')
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
         if path.startswith("/static/"):
             self._serve_static(path.removeprefix("/static/"))
             return
@@ -76,9 +105,18 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_error(HTTPStatus.NOT_FOUND)
 
     def do_POST(self) -> None:
-        if self.path != "/api/submissions":
-            self.send_error(HTTPStatus.NOT_FOUND)
+        if self.path == "/api/submissions":
+            self._handle_submission()
             return
+        if self.path == "/api/admin/login":
+            self._handle_admin_login()
+            return
+        if self.path == "/api/admin/logout":
+            self._handle_admin_logout()
+            return
+        self.send_error(HTTPStatus.NOT_FOUND)
+
+    def _handle_submission(self) -> None:
         try:
             payload = self._read_json_body()
         except ValueError as exc:
@@ -98,6 +136,41 @@ class AppHandler(BaseHTTPRequestHandler):
             },
             status=HTTPStatus.CREATED,
         )
+
+    def _handle_admin_login(self) -> None:
+        try:
+            payload = self._read_json_body()
+        except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            return
+        token = str(payload.get("token", "")).strip()
+        if token != ADMIN_TOKEN:
+            self._send_json({"error": "Sai admin token."}, status=HTTPStatus.UNAUTHORIZED)
+            return
+
+        session_value = self._build_admin_session_value(token)
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header(
+            "Set-Cookie",
+            f"{SESSION_COOKIE_NAME}={session_value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=43200",
+        )
+        content = json.dumps({"message": "Đăng nhập admin thành công."}, ensure_ascii=False).encode("utf-8")
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
+
+    def _handle_admin_logout(self) -> None:
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header(
+            "Set-Cookie",
+            f"{SESSION_COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0",
+        )
+        content = json.dumps({"message": "Đã đăng xuất admin."}, ensure_ascii=False).encode("utf-8")
+        self.send_header("Content-Length", str(len(content)))
+        self.end_headers()
+        self.wfile.write(content)
 
     def _serve_index(self) -> None:
         public_base_url = self._get_public_base_url()
@@ -138,7 +211,22 @@ class AppHandler(BaseHTTPRequestHandler):
         params = parse_qs(query)
         query_token = params.get("token", [""])[0]
         header_token = self.headers.get("X-Admin-Token", "")
-        return query_token == ADMIN_TOKEN or header_token == ADMIN_TOKEN
+        if query_token == ADMIN_TOKEN or header_token == ADMIN_TOKEN:
+            return True
+
+        cookie_header = self.headers.get("Cookie", "")
+        if not cookie_header:
+            return False
+        cookie = SimpleCookie()
+        cookie.load(cookie_header)
+        morsel = cookie.get(SESSION_COOKIE_NAME)
+        if not morsel:
+            return False
+        expected = self._build_admin_session_value(ADMIN_TOKEN)
+        return hmac.compare_digest(morsel.value, expected)
+
+    def _build_admin_session_value(self, token: str) -> str:
+        return hmac.new(token.encode("utf-8"), b"bchqs-admin-session", hashlib.sha256).hexdigest()
 
     def _get_public_base_url(self) -> str:
         if PUBLIC_BASE_URL:

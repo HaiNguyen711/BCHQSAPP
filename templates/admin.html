@@ -14,7 +14,7 @@
         <div class="hero__content">
           <div class="hero__eyebrow">Quản trị dữ liệu</div>
           <h1>{{ ORG_NAME }}</h1>
-          <p class="hero__intro">Nhập admin token để xem danh sách phiếu đã gửi, kiểm tra dữ liệu và xuất tệp CSV.</p>
+          <p class="hero__intro">Đăng nhập admin để xem dashboard tổng hợp, kiểm tra phiếu gửi về và xuất báo cáo Excel.</p>
         </div>
         <div class="hero__visual hero__visual--admin">
           <div class="hero__symbol-card hero__symbol-card--small">
@@ -24,12 +24,40 @@
       </div>
     </section>
 
-    <section class="card">
+    <section id="adminLoginCard" class="card admin-login-card">
+      <div class="card__header">
+        <div>
+          <h2>Đăng nhập admin</h2>
+          <p>Nhập admin token để vào khu vực quản trị của ứng dụng.</p>
+        </div>
+      </div>
       <div class="admin-toolbar">
         <input id="adminToken" type="password" placeholder="Nhập BCHQS_ADMIN_TOKEN">
-        <button id="loadAdminBtn" type="button" class="primary-btn">Tải dữ liệu</button>
+        <button id="loginAdminBtn" type="button" class="primary-btn">Đăng nhập</button>
+      </div>
+      <p id="adminLoginMessage" class="form-message" aria-live="polite"></p>
+    </section>
+
+    <section id="adminDashboardCard" class="card" hidden>
+      <div class="card__header">
+        <div>
+          <h2>Dashboard tổng hợp</h2>
+          <p>Theo dõi nhanh số lượng phiếu, phân bố địa bàn và tình hình dữ liệu gửi về.</p>
+        </div>
+        <div class="card__actions">
+          <button id="refreshAdminBtn" type="button" class="ghost-btn">Làm mới</button>
+          <button id="logoutAdminBtn" type="button" class="ghost-btn">Đăng xuất</button>
+        </div>
+      </div>
+
+      <div id="adminSummaryCards" class="stats-grid"></div>
+      <div id="adminSummaryLists" class="summary-grid"></div>
+
+      <div class="admin-toolbar admin-toolbar--actions">
+        <button id="exportExcelBtn" type="button" class="primary-btn">Xuất Excel</button>
         <button id="exportBtn" type="button" class="ghost-btn">Xuất CSV</button>
       </div>
+
       <p id="adminMessage" class="form-message" aria-live="polite"></p>
       <div id="adminTableWrap" class="table-wrap"></div>
     </section>
