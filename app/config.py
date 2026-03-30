@@ -15,7 +15,7 @@ DB_PATH = DATA_DIR / "bchqs.db"
 
 HOST = os.getenv("BCHQS_HOST", "0.0.0.0")
 PORT = int(os.getenv("BCHQS_PORT", "8000"))
-PUBLIC_BASE_URL = os.getenv("BCHQS_PUBLIC_BASE_URL", "http://localhost:8000")
+PUBLIC_BASE_URL = os.getenv("BCHQS_PUBLIC_BASE_URL", "").strip()
 ADMIN_TOKEN = os.getenv("BCHQS_ADMIN_TOKEN", "changeme-admin-token")
 ORG_NAME = os.getenv("BCHQS_ORG_NAME", "Ban Chỉ Huy Quân Sự Phường Trấn Biên")
 ORG_ADDRESS = os.getenv(

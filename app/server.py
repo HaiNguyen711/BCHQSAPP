@@ -46,6 +46,9 @@ class AppHandler(BaseHTTPRequestHandler):
         if path == "/api/form-schema":
             self._send_json(load_schema())
             return
+        if path == "/healthz":
+            self._send_json({"status": "ok"})
+            return
         if path == "/api/admin/submissions":
             if not self._is_admin(parsed.query):
                 self._send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
@@ -97,6 +100,7 @@ class AppHandler(BaseHTTPRequestHandler):
         )
 
     def _serve_index(self) -> None:
+        public_base_url = self._get_public_base_url()
         body = render_template(
             "index.html",
             {
@@ -105,7 +109,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 "ORG_PHONE": ORG_PHONE,
                 "ORG_EMAIL": ORG_EMAIL,
                 "ORG_FACEBOOK": ORG_FACEBOOK,
-                "PUBLIC_BASE_URL": PUBLIC_BASE_URL,
+                "PUBLIC_BASE_URL": public_base_url,
             },
         )
         self._send_html(body)
@@ -135,6 +139,15 @@ class AppHandler(BaseHTTPRequestHandler):
         query_token = params.get("token", [""])[0]
         header_token = self.headers.get("X-Admin-Token", "")
         return query_token == ADMIN_TOKEN or header_token == ADMIN_TOKEN
+
+    def _get_public_base_url(self) -> str:
+        if PUBLIC_BASE_URL:
+            return PUBLIC_BASE_URL.rstrip("/")
+        forwarded_proto = self.headers.get("X-Forwarded-Proto", "")
+        forwarded_host = self.headers.get("X-Forwarded-Host", "")
+        host = forwarded_host or self.headers.get("Host", f"localhost:{PORT}")
+        proto = forwarded_proto or ("https" if self.server.server_port == 443 else "http")
+        return f"{proto}://{host}".rstrip("/")
 
     def _read_json_body(self) -> dict:
         content_length = int(self.headers.get("Content-Length", "0"))
@@ -204,5 +217,6 @@ class AppHandler(BaseHTTPRequestHandler):
 def run() -> None:
     init_db()
     server = ThreadingHTTPServer((HOST, PORT), AppHandler)
-    print(f"BCHQS app running at {PUBLIC_BASE_URL}")
+    public_url = PUBLIC_BASE_URL or f"http://{HOST}:{PORT}"
+    print(f"BCHQS app running at {public_url}")
     server.serve_forever()
