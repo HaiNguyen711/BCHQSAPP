@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.env
+.venv/
+venv/
+
+data/*.db
+data/*.log
+data/*.sqlite
+
+tools/
+
+Thumbs.db
+Desktop.ini

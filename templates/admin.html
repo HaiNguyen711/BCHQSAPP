@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản trị BCHQS</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body data-page="admin">
+  <main class="shell shell--admin">
+    <section class="hero hero--compact">
+      <div class="hero__topline"></div>
+      <div class="hero__layout hero__layout--admin">
+        <div class="hero__content">
+          <div class="hero__eyebrow">Quản trị dữ liệu</div>
+          <h1>{{ ORG_NAME }}</h1>
+          <p class="hero__intro">Nhập admin token để xem danh sách phiếu đã gửi, kiểm tra dữ liệu và xuất tệp CSV.</p>
+        </div>
+        <div class="hero__visual hero__visual--admin">
+          <div class="hero__symbol-card hero__symbol-card--small">
+            <img src="/photo/Insignia_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Biểu trưng Dân quân tự vệ Việt Nam">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="admin-toolbar">
+        <input id="adminToken" type="password" placeholder="Nhập BCHQS_ADMIN_TOKEN">
+        <button id="loadAdminBtn" type="button" class="primary-btn">Tải dữ liệu</button>
+        <button id="exportBtn" type="button" class="ghost-btn">Xuất CSV</button>
+      </div>
+      <p id="adminMessage" class="form-message" aria-live="polite"></p>
+      <div id="adminTableWrap" class="table-wrap"></div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

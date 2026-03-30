@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phiếu thu thập thông tin BCHQS</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body data-page="form">
+  <main class="shell">
+    <section class="hero">
+      <div class="hero__topline"></div>
+      <div class="hero__layout">
+        <div class="hero__content">
+          <div class="hero__eyebrow">Cổng kê khai thông tin công dân</div>
+          <h1>{{ ORG_NAME }}</h1>
+          <p class="hero__intro">
+            Biểu mẫu trực tuyến để công dân nhập thông tin phục vụ tiếp nhận hồ sơ, cập nhật dữ liệu và tổng hợp báo cáo cho Ban Chỉ Huy Quân Sự.
+          </p>
+          <div class="hero__meta">
+            <div><strong>Địa chỉ:</strong> {{ ORG_ADDRESS }}</div>
+            <div><strong>Điện thoại:</strong> {{ ORG_PHONE }}</div>
+            <div><strong>Email:</strong> {{ ORG_EMAIL }}</div>
+            <div><strong>Facebook:</strong> {{ ORG_FACEBOOK }}</div>
+          </div>
+          <div class="hero__badges">
+            <span>Kê khai trực tuyến 24/7</span>
+            <span>Bảo quản dữ liệu tập trung</span>
+            <span>Hỗ trợ quản trị và xuất báo cáo</span>
+          </div>
+        </div>
+        <div class="hero__visual">
+          <div class="hero__symbol-card">
+            <img src="/photo/Insignia_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Biểu trưng Dân quân tự vệ Việt Nam">
+          </div>
+          <div class="hero__flag-card">
+            <img src="/photo/Flag_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Cờ Dân quân tự vệ">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <div>
+          <h2>Phiếu khai thông tin</h2>
+          <p>Vui lòng nhập đúng và đầy đủ thông tin. Các mục có dấu * là bắt buộc.</p>
+        </div>
+        <div class="card__actions">
+          <button id="prevStepBtn" type="button" class="ghost-btn">Quay lại</button>
+          <button id="nextStepBtn" type="button" class="primary-btn">Tiếp tục</button>
+        </div>
+      </div>
+
+      <div id="progressText" class="progress-text"></div>
+      <div id="progressBar" class="progress-bar"><span></span></div>
+
+      <form id="citizenForm" class="stack"></form>
+
+      <div class="submit-bar">
+        <button id="submitBtn" type="button" class="primary-btn primary-btn--wide">Gửi thông tin</button>
+        <p id="formMessage" class="form-message" aria-live="polite"></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.APP_BOOTSTRAP = {
+      publicBaseUrl: "{{ PUBLIC_BASE_URL }}"
+    };
+  </script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
