@@ -214,8 +214,17 @@ function updateProgress() {
   document.getElementById("progressText").textContent = `Bước ${current}/${total}: ${state.schema.sections[state.currentSectionIndex].title}`;
   document.querySelector("#progressBar span").style.width = `${(current / total) * 100}%`;
 
-  document.getElementById("prevStepBtn").disabled = state.currentSectionIndex === 0;
-  document.getElementById("nextStepBtn").disabled = state.currentSectionIndex === total - 1;
+  const prevBtn = document.getElementById("prevStepBtn");
+  const nextBtn = document.getElementById("nextStepBtn");
+  const submitBtn = document.getElementById("submitBtn");
+
+  const isFirstStep = state.currentSectionIndex === 0;
+  const isLastStep = state.currentSectionIndex === total - 1;
+
+  prevBtn.disabled = isFirstStep;
+  prevBtn.hidden = isFirstStep;
+  nextBtn.hidden = isLastStep;
+  submitBtn.hidden = !isLastStep;
 }
 
 async function submitForm() {

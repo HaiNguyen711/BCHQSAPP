@@ -7,47 +7,52 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body data-page="form">
-  <main class="shell">
-    <section class="hero">
+  <main class="shell shell--landing">
+    <section class="hero hero--landing">
       <div class="hero__topline"></div>
-      <div class="hero__layout">
-        <div class="hero__content">
-          <div class="hero__eyebrow">Cổng kê khai thông tin công dân</div>
-          <h1>{{ ORG_NAME }}</h1>
-          <p class="hero__intro">
-            Biểu mẫu trực tuyến để công dân nhập thông tin phục vụ tiếp nhận hồ sơ, cập nhật dữ liệu và tổng hợp báo cáo cho Ban Chỉ Huy Quân Sự.
-          </p>
-          <div class="hero__divider"></div>
-          <div class="hero__meta">
-            <div><strong>Địa chỉ:</strong> {{ ORG_ADDRESS }}</div>
-            <div><strong>Điện thoại:</strong> {{ ORG_PHONE }}</div>
-            <div><strong>Email:</strong> {{ ORG_EMAIL }}</div>
-            <div><strong>Facebook:</strong> {{ ORG_FACEBOOK }}</div>
-          </div>
-          <div class="hero__actions">
-            <a class="ghost-btn hero__admin-btn" href="/admin">Đăng nhập admin</a>
+      <a class="hero__flag-entry" href="/admin" aria-label="Vào khu vực admin">
+        <img src="/photo/Flag_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Cờ Dân quân tự vệ">
+      </a>
+      <div class="hero__masthead">
+        <div class="hero__brand">
+          <img class="hero__brand-mark" src="/photo/Insignia_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Biểu trưng Dân quân tự vệ Việt Nam">
+          <div class="hero__brand-copy">
+            <span>Cổng kê khai thông tin công dân</span>
+            <strong>{{ ORG_NAME }}</strong>
           </div>
         </div>
-        <div class="hero__visual">
-          <div class="hero__symbol-card">
-            <img src="/photo/Insignia_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Biểu trưng Dân quân tự vệ Việt Nam">
-          </div>
-          <div class="hero__flag-card">
-            <img src="/photo/Flag_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Cờ Dân quân tự vệ">
-          </div>
+      </div>
+
+      <div class="hero__watermark">
+        <img src="/photo/Insignia_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="">
+      </div>
+
+      <div class="hero__copy">
+        <div class="hero__eyebrow">Biểu mẫu trực tuyến phục vụ tiếp nhận hồ sơ</div>
+        <h1>{{ ORG_NAME }}</h1>
+        <p class="hero__intro">
+          Công dân có thể nhập thông tin trực tuyến để BCHQS tiếp nhận, tổng hợp và quản lý dữ liệu thuận tiện hơn trên cùng một hệ thống.
+        </p>
+        <div class="hero__meta">
+          <div><strong>Địa chỉ</strong><span>{{ ORG_ADDRESS }}</span></div>
+          <div><strong>Điện thoại</strong><span>{{ ORG_PHONE }}</span></div>
+          <div><strong>Email</strong><span>{{ ORG_EMAIL }}</span></div>
+          <div><strong>Facebook</strong><span>{{ ORG_FACEBOOK }}</span></div>
         </div>
       </div>
     </section>
 
-    <section class="card">
-      <div class="card__header">
+    <section class="card card--sheet">
+      <div class="sheet-tabs">
+        <span class="is-active">Kê khai trực tuyến</span>
+        <span>Thông tin công dân</span>
+        <span>Gửi dữ liệu</span>
+      </div>
+
+      <div class="card__header card__header--sheet">
         <div>
           <h2>Phiếu khai thông tin</h2>
-          <p>Vui lòng nhập đúng và đầy đủ thông tin. Các mục có dấu * là bắt buộc.</p>
-        </div>
-        <div class="card__actions">
-          <button id="prevStepBtn" type="button" class="ghost-btn">Quay lại</button>
-          <button id="nextStepBtn" type="button" class="primary-btn">Tiếp tục</button>
+          <p>Vui lòng nhập đầy đủ, chính xác và kiểm tra kỹ trước khi gửi. Các mục có dấu * là bắt buộc.</p>
         </div>
       </div>
 
@@ -56,10 +61,14 @@
 
       <form id="citizenForm" class="stack"></form>
 
-      <div class="submit-bar">
+      <div class="form-footer">
+        <div class="card__actions card__actions--footer">
+          <button id="prevStepBtn" type="button" class="ghost-btn">Quay lại</button>
+          <button id="nextStepBtn" type="button" class="primary-btn">Tiếp tục</button>
+        </div>
         <button id="submitBtn" type="button" class="primary-btn primary-btn--wide">Gửi thông tin</button>
-        <p id="formMessage" class="form-message" aria-live="polite"></p>
       </div>
+      <p id="formMessage" class="form-message form-message--sheet" aria-live="polite"></p>
     </section>
   </main>
 
