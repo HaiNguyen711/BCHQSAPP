@@ -3,6 +3,8 @@ const state = {
   values: {},
   currentSectionIndex: 0,
   showValidation: false,
+  adminItems: [],
+  adminCitizenIdFilter: "",
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -452,6 +454,7 @@ async function bootAdminPage() {
   document.getElementById("logoutAdminBtn").addEventListener("click", logoutAdmin);
   document.getElementById("exportBtn").addEventListener("click", exportCsv);
   document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
+  document.getElementById("adminSearchCitizenId").addEventListener("input", handleAdminCitizenIdSearch);
 
   const response = await fetch("/api/admin/session");
   const session = await response.json();
@@ -501,11 +504,14 @@ async function loginAdmin() {
 async function logoutAdmin() {
   await fetch("/api/admin/logout", { method: "POST" });
   document.getElementById("adminToken").value = "";
+  document.getElementById("adminSearchCitizenId").value = "";
   document.getElementById("adminLoginMessage").textContent = "";
   document.getElementById("adminMessage").textContent = "";
   document.getElementById("adminTableWrap").innerHTML = "";
   document.getElementById("adminSummaryCards").innerHTML = "";
   document.getElementById("adminSummaryLists").innerHTML = "";
+  state.adminItems = [];
+  state.adminCitizenIdFilter = "";
   showAdminLogin();
 }
 
@@ -529,13 +535,44 @@ async function loadAdminData() {
 
   const summary = await summaryResponse.json();
   const submissions = await submissionsResponse.json();
+  state.adminItems = submissions.items || [];
 
   document.getElementById("adminSummaryCards").innerHTML = renderSummaryCards(summary);
   document.getElementById("adminSummaryLists").innerHTML = renderSummaryLists(summary);
-  tableWrap.innerHTML = renderAdminTable(submissions.items || []);
+  renderAdminTableWrap();
 
-  messageEl.textContent = `Đã tải ${submissions.items.length} phiếu.`;
+  messageEl.textContent = `Đã tải ${state.adminItems.length} phiếu.`;
   messageEl.className = "form-message is-success";
+}
+
+function handleAdminCitizenIdSearch(event) {
+  state.adminCitizenIdFilter = event.target.value.trim();
+  renderAdminTableWrap();
+}
+
+function renderAdminTableWrap() {
+  const tableWrap = document.getElementById("adminTableWrap");
+  const messageEl = document.getElementById("adminMessage");
+  const items = getFilteredAdminItems();
+  tableWrap.innerHTML = renderAdminTable(items);
+
+  if (!state.adminItems.length) {
+    return;
+  }
+
+  if (state.adminCitizenIdFilter) {
+    messageEl.textContent = `Tìm thấy ${items.length}/${state.adminItems.length} phiếu theo CCCD.`;
+    messageEl.className = "form-message is-success";
+  }
+}
+
+function getFilteredAdminItems() {
+  if (!state.adminCitizenIdFilter) {
+    return state.adminItems;
+  }
+
+  const normalizedFilter = normalizeDigits(state.adminCitizenIdFilter);
+  return state.adminItems.filter((item) => normalizeDigits(item.citizen_id_number || "").includes(normalizedFilter));
 }
 
 function renderSummaryCards(summary) {
@@ -555,9 +592,9 @@ function renderSummaryCards(summary) {
 
 function renderSummaryLists(summary) {
   const groups = [
-    { title: "Top tỉnh/thành", items: summary.top_provinces || [] },
+    { title: "Top khu phố", items: summary.top_neighborhoods || [] },
+    { title: "Top số lượng theo năm sinh", items: summary.top_birth_years || [] },
     { title: "Top phường", items: summary.top_wards || [] },
-    { title: "Top nghề nghiệp", items: summary.top_occupations || [] },
     { title: "Top trình độ đào tạo", items: summary.top_training_levels || [] },
   ];
 
@@ -594,14 +631,12 @@ function renderAdminTable(items) {
   const rows = items.map((item) => `
     <tr>
       <td>${item.id}</td>
-      <td>${escapeHtml(item.full_name)}</td>
-      <td>${escapeHtml(item.citizen_id_number)}</td>
-      <td>${escapeHtml(item.phone || "")}</td>
-      <td>${escapeHtml(item.payload?.personal_basic?.province || "")}</td>
-      <td>${escapeHtml(item.payload?.personal_basic?.ward || "")}</td>
-      <td>${escapeHtml(item.current_residence || "")}</td>
-      <td>${escapeHtml(item.created_at)}</td>
-      <td><pre>${escapeHtml(JSON.stringify(item.payload, null, 2))}</pre></td>
+      <td>${renderCitizenPrimaryInfo(item)}</td>
+      <td>${renderCitizenLocationInfo(item)}</td>
+      <td>${renderCitizenFamilyInfo(item)}</td>
+      <td>${renderCitizenTimelineInfo(item)}</td>
+      <td>${escapeHtml(formatDateTime(item.created_at))}</td>
+      <td>${renderCitizenPayloadDetails(item)}</td>
     </tr>
   `).join("");
 
@@ -610,19 +645,128 @@ function renderAdminTable(items) {
       <thead>
         <tr>
           <th>ID</th>
-          <th>Họ tên</th>
-          <th>CCCD</th>
-          <th>Điện thoại</th>
-          <th>Tỉnh/Thành</th>
-          <th>Phường</th>
-          <th>Nơi ở hiện tại</th>
+          <th>Thông tin công dân</th>
+          <th>Địa bàn</th>
+          <th>Gia đình</th>
+          <th>Quá trình</th>
           <th>Thời gian tạo</th>
-          <th>Dữ liệu</th>
+          <th>Chi tiết</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+function renderCitizenPrimaryInfo(item) {
+  const personal = item.payload?.personal_basic || {};
+  const pieces = [
+    { label: "Họ tên", value: item.full_name },
+    { label: "Giới tính", value: personal.gender },
+    { label: "Ngày sinh", value: personal.date_of_birth },
+    { label: "CCCD", value: item.citizen_id_number },
+    { label: "Điện thoại", value: item.phone },
+  ].filter((piece) => piece.value);
+
+  return renderKeyValueList(pieces);
+}
+
+function renderCitizenLocationInfo(item) {
+  const personal = item.payload?.personal_basic || {};
+  const pieces = [
+    { label: "Khu phố", value: personal.neighborhood },
+    { label: "Phường", value: personal.ward },
+    { label: "Tỉnh/Thành", value: personal.province },
+    { label: "Quê quán", value: personal.hometown },
+    { label: "Nơi ở hiện tại", value: item.current_residence },
+  ].filter((piece) => piece.value);
+
+  return renderKeyValueList(pieces);
+}
+
+function renderCitizenFamilyInfo(item) {
+  const family = item.payload?.family_basic || {};
+  const pieces = [
+    { label: "Cha", value: family.father_name },
+    { label: "Mẹ", value: family.mother_name },
+    { label: "Nhà có", value: family.total_children ? `${family.total_children} con` : "" },
+    { label: "Con thứ", value: family.birth_order },
+    { label: "Con trai", value: family.sons_count },
+    { label: "Con gái", value: family.daughters_count },
+  ].filter((piece) => piece.value);
+
+  return renderKeyValueList(pieces);
+}
+
+function renderCitizenTimelineInfo(item) {
+  const personalHistory = item.payload?.personal_history || [];
+  const fatherHistory = item.payload?.father_history || [];
+  const motherHistory = item.payload?.mother_history || [];
+
+  const pieces = [
+    { label: "Bản thân", value: `${personalHistory.length} giai đoạn` },
+    { label: "Cha", value: `${fatherHistory.length} giai đoạn` },
+    { label: "Mẹ", value: `${motherHistory.length} giai đoạn` },
+    { label: "Anh chị em", value: `${(item.payload?.siblings || []).length} người` },
+  ];
+
+  return renderKeyValueList(pieces);
+}
+
+function renderCitizenPayloadDetails(item) {
+  const personal = item.payload?.personal_basic || {};
+  const summaryPieces = [
+    { label: "Dân tộc", value: personal.ethnicity },
+    { label: "Tôn giáo", value: personal.religion },
+    { label: "Quốc tịch", value: personal.nationality },
+    { label: "Nghề nghiệp", value: personal.occupation },
+    { label: "Nơi làm việc", value: personal.workplace },
+  ].filter((piece) => piece.value);
+
+  return `
+    <div class="admin-detail-stack">
+      ${renderKeyValueList(summaryPieces)}
+      <details class="admin-json-details">
+        <summary>Xem JSON gốc</summary>
+        <pre>${escapeHtml(JSON.stringify(item.payload, null, 2))}</pre>
+      </details>
+    </div>
+  `;
+}
+
+function renderKeyValueList(items) {
+  if (!items.length) {
+    return "<span class=\"admin-empty\">-</span>";
+  }
+
+  return `
+    <dl class="admin-kv-list">
+      ${items.map((item) => `
+        <div>
+          <dt>${escapeHtml(item.label)}</dt>
+          <dd>${escapeHtml(item.value)}</dd>
+        </div>
+      `).join("")}
+    </dl>
+  `;
+}
+
+function formatDateTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value || "";
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function normalizeDigits(value) {
+  return String(value).replace(/\D/g, "");
 }
 
 function exportCsv() {

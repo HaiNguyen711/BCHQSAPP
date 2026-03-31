@@ -20,7 +20,7 @@ ADMIN_TOKEN = os.getenv("BCHQS_ADMIN_TOKEN", "changeme-admin-token")
 ORG_NAME = os.getenv("BCHQS_ORG_NAME", "Ban Chỉ Huy Quân Sự Phường Trấn Biên")
 ORG_ADDRESS = os.getenv(
     "BCHQS_ORG_ADDRESS",
-    "86 Đ. Nguyễn Văn Hoa, khu phố Gò Me, Trấn Biên, Đồng Nai 76108, Việt Nam",
+    "86 Đ. Nguyễn Văn Hoa, khu phố Gò Me, Trấn Biên, Đồng Nai, Việt Nam",
 )
 ORG_PHONE = os.getenv("BCHQS_ORG_PHONE", "0973465699")
 ORG_EMAIL = os.getenv("BCHQS_ORG_EMAIL", "banchihuyquansuphuongtranbien@gmail.com")

@@ -1,24 +1,32 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản trị BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=20260401-admin-5">
 </head>
 <body data-page="admin">
   <main class="shell shell--admin shell--landing">
     <section class="hero hero--landing hero--compact">
       <div class="hero__topline"></div>
+      <a class="hero__admin-entry hero__admin-entry--back" href="/" aria-label="Về trang kê khai" title="Về trang kê khai">
+        <img
+          src="/photo/Flag_of_the_Vietnam_Self-Defence_Militia.svg.png"
+          alt=""
+          width="76"
+          height="52"
+          decoding="async"
+        >
+      </a>
       <div class="hero__masthead">
         <div class="hero__brand">
           <img class="hero__brand-mark" src="/photo/Insignia_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Biểu trưng Dân quân tự vệ Việt Nam">
           <div class="hero__brand-copy">
-            <span>Khu vực quản trị</span>
+            <span>Khu vực quản trị dữ liệu</span>
             <strong>{{ ORG_NAME }}</strong>
           </div>
         </div>
-        <a class="ghost-btn hero__admin-btn" href="/">Về trang kê khai</a>
       </div>
 
       <div class="hero__watermark hero__watermark--admin">
@@ -29,17 +37,12 @@
         <div class="hero__eyebrow">Theo dõi và quản trị dữ liệu tập trung</div>
         <h1>Dashboard quản trị BCHQS</h1>
         <p class="hero__intro">
-          Đăng nhập admin để xem tổng hợp phiếu gửi về, kiểm tra dữ liệu và xuất báo cáo phục vụ công tác quản lý.
+          Đăng nhập admin để theo dõi phiếu gửi về, rà soát thông tin công dân và xuất báo cáo nhanh phục vụ công tác quản lý.
         </p>
       </div>
     </section>
 
     <section id="adminLoginCard" class="card card--sheet admin-login-card">
-      <div class="sheet-tabs">
-        <span class="is-active">Đăng nhập</span>
-        <span>Dashboard</span>
-        <span>Xuất báo cáo</span>
-      </div>
       <div class="card__header card__header--sheet">
         <div>
           <h2>Đăng nhập admin</h2>
@@ -54,11 +57,6 @@
     </section>
 
     <section id="adminDashboardCard" class="card card--sheet" hidden>
-      <div class="sheet-tabs">
-        <span class="is-active">Dashboard tổng hợp</span>
-        <span>Dữ liệu gửi về</span>
-        <span>Báo cáo Excel</span>
-      </div>
       <div class="card__header card__header--sheet">
         <div>
           <h2>Dashboard tổng hợp</h2>
@@ -74,6 +72,7 @@
       <div id="adminSummaryLists" class="summary-grid"></div>
 
       <div class="admin-toolbar admin-toolbar--actions">
+        <input id="adminSearchCitizenId" type="search" placeholder="Tìm theo số CCCD">
         <button id="exportExcelBtn" type="button" class="primary-btn">Xuất Excel</button>
         <button id="exportBtn" type="button" class="ghost-btn">Xuất CSV</button>
       </div>
@@ -83,6 +82,6 @@
     </section>
   </main>
 
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260401-admin-5"></script>
 </body>
 </html>

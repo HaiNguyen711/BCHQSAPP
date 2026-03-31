@@ -93,9 +93,9 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
     rows = items if items is not None else list_submissions()
     now_date = datetime.now(timezone.utc).date()
     today_count = 0
-    province_counter: Counter[str] = Counter()
+    neighborhood_counter: Counter[str] = Counter()
+    birth_year_counter: Counter[str] = Counter()
     ward_counter: Counter[str] = Counter()
-    occupation_counter: Counter[str] = Counter()
     training_counter: Counter[str] = Counter()
 
     for item in rows:
@@ -109,18 +109,18 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
         if created_at and created_at.date() == now_date:
             today_count += 1
 
-        _add_counter_value(province_counter, personal.get("province"))
+        _add_counter_value(neighborhood_counter, personal.get("neighborhood"))
+        _add_counter_value(birth_year_counter, _extract_birth_year(personal.get("date_of_birth")))
         _add_counter_value(ward_counter, personal.get("ward"))
-        _add_counter_value(occupation_counter, personal.get("occupation"))
-        _add_counter_value(training_counter, personal.get("training_level"))
+        _add_counter_value(training_counter, personal.get("training_level"), case_insensitive=True)
 
     return {
         "total_submissions": len(rows),
         "today_submissions": today_count,
         "unique_citizen_ids": len({row.get("citizen_id_number", "").strip() for row in rows if row.get("citizen_id_number")}),
-        "top_provinces": _top_counter_items(province_counter),
+        "top_neighborhoods": _top_counter_items(neighborhood_counter),
+        "top_birth_years": _top_counter_items(birth_year_counter),
         "top_wards": _top_counter_items(ward_counter),
-        "top_occupations": _top_counter_items(occupation_counter),
         "top_training_levels": _top_counter_items(training_counter),
     }
 
@@ -169,12 +169,20 @@ def export_excel() -> bytes:
     summary_sheet.append(["So phieu hom nay", summary["today_submissions"]])
     summary_sheet.append(["So CCCD duy nhat", summary["unique_citizen_ids"]])
     summary_sheet.append([])
-    summary_sheet.append(["Top tinh/thanh", "So luong"])
-    for item in summary["top_provinces"]:
+    summary_sheet.append(["Top khu pho", "So luong"])
+    for item in summary["top_neighborhoods"]:
+        summary_sheet.append([item["label"], item["count"]])
+    summary_sheet.append([])
+    summary_sheet.append(["Top nam sinh", "So luong"])
+    for item in summary["top_birth_years"]:
         summary_sheet.append([item["label"], item["count"]])
     summary_sheet.append([])
     summary_sheet.append(["Top phuong", "So luong"])
     for item in summary["top_wards"]:
+        summary_sheet.append([item["label"], item["count"]])
+    summary_sheet.append([])
+    summary_sheet.append(["Top trinh do dao tao", "So luong"])
+    for item in summary["top_training_levels"]:
         summary_sheet.append([item["label"], item["count"]])
 
     data_sheet = workbook.create_sheet("Du lieu")
@@ -232,7 +240,35 @@ def _top_counter_items(counter: Counter[str], limit: int = 5) -> list[dict[str, 
     return [{"label": label, "count": count} for label, count in counter.most_common(limit)]
 
 
-def _add_counter_value(counter: Counter[str], raw_value: Any) -> None:
+def _add_counter_value(counter: Counter[str], raw_value: Any, case_insensitive: bool = False) -> None:
     value = str(raw_value or "").strip()
     if value:
-        counter[value] += 1
+        counter[_normalize_counter_label(value, case_insensitive=case_insensitive)] += 1
+
+
+def _normalize_counter_label(value: str, case_insensitive: bool = False) -> str:
+    if not case_insensitive:
+        return value
+    normalized = " ".join(value.split()).lower()
+    return normalized.capitalize()
+
+
+def _extract_birth_year(raw_value: Any) -> str:
+    value = str(raw_value or "").strip()
+    if not value:
+        return ""
+
+    if "/" in value:
+        parts = value.split("/")
+        if len(parts) == 3 and len(parts[-1]) == 4 and parts[-1].isdigit():
+            return parts[-1]
+
+    if "-" in value:
+        parts = value.split("-")
+        if len(parts) == 3:
+            if len(parts[0]) == 4 and parts[0].isdigit():
+                return parts[0]
+            if len(parts[-1]) == 4 and parts[-1].isdigit():
+                return parts[-1]
+
+    return value if len(value) == 4 and value.isdigit() else ""
