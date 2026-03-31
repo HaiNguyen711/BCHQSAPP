@@ -1,7 +1,9 @@
 tunnel: REPLACE_WITH_TUNNEL_ID
+# Thay YOUR_USER va tunnel ID bang gia tri thuc te tren may dang chay.
+# File credentials duoc cloudflared tao sau khi tunnel duoc tao.
 credentials-file: C:\Users\YOUR_USER\.cloudflared\REPLACE_WITH_TUNNEL_ID.json
 
 ingress:
-  - hostname: form.example.com
+  - hostname: khaibao.example.com
     service: http://127.0.0.1:8000
   - service: http_status:404

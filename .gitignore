@@ -10,8 +10,12 @@ venv/
 data/*.db
 data/*.log
 data/*.sqlite
+data/*.stdout.log
+data/*.stderr.log
 
 tools/
+deploy/cloudflared-config.yml
+deploy/runtime.env.ps1
 
 Thumbs.db
 Desktop.ini

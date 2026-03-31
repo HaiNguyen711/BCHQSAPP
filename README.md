@@ -15,6 +15,12 @@ Web app thu thập thông tin công dân cho BCHQS, lấy cấu trúc trường 
 ## Chạy local
 
 ```powershell
+python -m pip install -r requirements.txt
+```
+
+Sau đó:
+
+```powershell
 .\scripts\start_local.ps1
 ```
 
@@ -39,13 +45,13 @@ Sau đó mở:
 
 Quick tunnel như `trycloudflare.com` chỉ phù hợp để thử nhanh. Để có link ngắn, dễ nhớ và ổn định hơn, hãy dùng:
 
-1. Domain hoặc subdomain riêng, ví dụ `form.tenmiencuaban.com`
+1. Domain hoặc subdomain riêng, ví dụ `khaibao.tenmiencuaban.com`
 2. Cloudflare named tunnel hoặc một reverse proxy ổn định trên VPS
 
 Tài liệu mẫu cho Cloudflare named tunnel nằm ở:
 
-- [deploy/cloudflared-named-tunnel.md](/E:/CodeX/BCHQSAPP/deploy/cloudflared-named-tunnel.md)
-- [deploy/cloudflared-config.example.yml](/E:/CodeX/BCHQSAPP/deploy/cloudflared-config.example.yml)
+- `deploy/cloudflared-named-tunnel.md`
+- `deploy/cloudflared-config.example.yml`
 
 ## Ghi chú
 

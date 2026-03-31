@@ -5,4 +5,10 @@ if (-not $env:BCHQS_ADMIN_TOKEN) {
     $env:BCHQS_ADMIN_TOKEN = "doi-token-quan-tri"
 }
 
-& "C:\Users\CPU12709-local\AppData\Local\Programs\Python\Python310\python.exe" main.py
+$pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+
+if (-not $pythonCommand) {
+    throw "Khong tim thay lenh 'python' trong PATH. Hay cai Python 3 va thu lai."
+}
+
+& $pythonCommand.Source main.py
