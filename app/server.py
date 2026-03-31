@@ -8,6 +8,7 @@ from http import HTTPStatus
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
+import re
 
 from .config import (
     ADMIN_TOKEN,
@@ -249,39 +250,72 @@ class AppHandler(BaseHTTPRequestHandler):
         return body
 
     def _validate_submission(self, payload: dict) -> dict[str, str]:
-        personal = payload.get("personal_basic")
-        family = payload.get("family_basic")
-        if not isinstance(personal, dict):
-            return {"personal_basic": "Thiếu nhóm thông tin cá nhân."}
-        if not isinstance(family, dict):
-            return {"family_basic": "Thiếu nhóm thông tin gia đình."}
-
         errors: dict[str, str] = {}
-        required_personal = {
-            "full_name": "Họ và tên công dân là bắt buộc.",
-            "date_of_birth": "Ngày sinh là bắt buộc.",
-            "citizen_id_number": "Số CCCD là bắt buộc.",
-            "phone": "Số điện thoại là bắt buộc.",
-            "street_address": "Địa chỉ số nhà là bắt buộc.",
-            "ward": "Phường là bắt buộc.",
-            "province": "Tỉnh là bắt buộc.",
-            "current_residence": "Nơi ở hiện tại là bắt buộc.",
-            "hometown": "Quê quán là bắt buộc.",
-        }
-        for key, message in required_personal.items():
-            if not str(personal.get(key, "")).strip():
-                errors[f"personal_basic.{key}"] = message
+        schema = load_schema()
+        for section in schema.get("sections", []):
+            section_id = section.get("id", "")
+            section_label = section.get("title", "Mục")
+            section_payload = payload.get(section_id)
 
-        required_family = {
-            "father_name": "Họ tên cha là bắt buộc.",
-            "father_date_of_birth": "Ngày sinh cha là bắt buộc.",
-            "mother_name": "Họ tên mẹ là bắt buộc.",
-            "mother_date_of_birth": "Ngày sinh mẹ là bắt buộc.",
-        }
-        for key, message in required_family.items():
-            if not str(family.get(key, "")).strip():
-                errors[f"family_basic.{key}"] = message
+            if section.get("repeatable"):
+                if not isinstance(section_payload, list):
+                    section_payload = []
+                min_items = int(section.get("min_items") or 0)
+                if len(section_payload) < min_items:
+                    errors[section_id] = f"{section_label} cần ít nhất {min_items} mục."
+                    continue
+
+                for item_index, item in enumerate(section_payload):
+                    if not isinstance(item, dict):
+                        errors[f"{section_id}.{item_index}"] = f"{section_label} #{item_index + 1} không hợp lệ."
+                        continue
+                    for field in section.get("fields", []):
+                        field_id = field.get("id", "")
+                        field_label = field.get("label", field_id)
+                        field_value = item.get(field_id)
+                        if field.get("required") and self._is_blank(field_value):
+                            errors[f"{section_id}.{item_index}.{field_id}"] = f"{field_label} là bắt buộc."
+                            continue
+                        if field.get("type") == "date" and not self._is_blank(field_value) and not self._is_valid_date(field_value):
+                            errors[f"{section_id}.{item_index}.{field_id}"] = f"{field_label} phải theo định dạng dd/mm/yyyy."
+                continue
+
+            if not isinstance(section_payload, dict):
+                errors[section_id] = f"Thiếu nhóm {section_label.lower()}."
+                continue
+
+            for field in section.get("fields", []):
+                field_id = field.get("id", "")
+                field_label = field.get("label", field_id)
+                field_value = section_payload.get(field_id)
+                if field.get("required") and self._is_blank(field_value):
+                    errors[f"{section_id}.{field_id}"] = f"{field_label} là bắt buộc."
+                    continue
+                if field.get("type") == "date" and not self._is_blank(field_value) and not self._is_valid_date(field_value):
+                    errors[f"{section_id}.{field_id}"] = f"{field_label} phải theo định dạng dd/mm/yyyy."
         return errors
+
+    def _is_blank(self, value: object) -> bool:
+        if value is None:
+            return True
+        return not str(value).strip()
+
+    def _is_valid_date(self, value: object) -> bool:
+        match = re.fullmatch(r"(\d{2})/(\d{2})/(\d{4})", str(value).strip())
+        if not match:
+            return False
+        day, month, year = (int(part) for part in match.groups())
+        if month < 1 or month > 12 or day < 1:
+            return False
+
+        if month == 2:
+            is_leap_year = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+            max_day = 29 if is_leap_year else 28
+        elif month in {4, 6, 9, 11}:
+            max_day = 30
+        else:
+            max_day = 31
+        return day <= max_day
 
     def _send_html(self, content: bytes, status: HTTPStatus = HTTPStatus.OK) -> None:
         self.send_response(status)

@@ -4,14 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phiếu thu thập thông tin BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/styles.css?v=20260401-8">
 </head>
 <body data-page="form">
   <main class="shell shell--landing">
     <section class="hero hero--landing">
       <div class="hero__topline"></div>
-      <a class="hero__flag-entry" href="/admin" aria-label="Vào khu vực admin">
-        <img src="/photo/Flag_of_the_Vietnam_Self-Defence_Militia.svg.png" alt="Cờ Dân quân tự vệ">
+      <a class="hero__admin-entry" href="/admin" aria-label="Vào khu vực admin" title="Quản trị">
+        <img
+          src="/photo/Flag_of_the_Vietnam_Self-Defence_Militia.svg.png"
+          alt=""
+          width="76"
+          height="52"
+          decoding="async"
+        >
       </a>
       <div class="hero__masthead">
         <div class="hero__brand">
@@ -31,7 +37,7 @@
         <div class="hero__eyebrow">Biểu mẫu trực tuyến phục vụ tiếp nhận hồ sơ</div>
         <h1>{{ ORG_NAME }}</h1>
         <p class="hero__intro">
-          Công dân có thể nhập thông tin trực tuyến để BCHQS tiếp nhận, tổng hợp và quản lý dữ liệu thuận tiện hơn trên cùng một hệ thống.
+          Khai báo trực tuyến để BCHQS tiếp nhận và cập nhật hồ sơ nhanh hơn, đồng bộ hơn.
         </p>
         <div class="hero__meta">
           <div><strong>Địa chỉ</strong><span>{{ ORG_ADDRESS }}</span></div>
@@ -43,16 +49,10 @@
     </section>
 
     <section class="card card--sheet">
-      <div class="sheet-tabs">
-        <span class="is-active">Kê khai trực tuyến</span>
-        <span>Thông tin công dân</span>
-        <span>Gửi dữ liệu</span>
-      </div>
-
       <div class="card__header card__header--sheet">
         <div>
           <h2>Phiếu khai thông tin</h2>
-          <p>Vui lòng nhập đầy đủ, chính xác và kiểm tra kỹ trước khi gửi. Các mục có dấu * là bắt buộc.</p>
+          <p>Điền đủ các mục bắt buộc trước khi chuyển bước. Riêng ngày vào Đảng và ngày vào Đoàn có thể để trống nếu chưa có.</p>
         </div>
       </div>
 
@@ -77,6 +77,6 @@
       publicBaseUrl: "{{ PUBLIC_BASE_URL }}"
     };
   </script>
-  <script src="/static/app.js"></script>
+  <script src="/static/app.js?v=20260401-8"></script>
 </body>
 </html>

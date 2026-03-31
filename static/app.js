@@ -2,6 +2,7 @@ const state = {
   schema: null,
   values: {},
   currentSectionIndex: 0,
+  showValidation: false,
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -21,12 +22,22 @@ async function bootFormPage() {
   renderForm();
 
   document.getElementById("prevStepBtn").addEventListener("click", () => {
+    const visibleSections = getVisibleSections();
+    state.showValidation = false;
     state.currentSectionIndex = Math.max(0, state.currentSectionIndex - 1);
+    state.currentSectionIndex = Math.min(state.currentSectionIndex, visibleSections.length - 1);
     renderForm();
   });
 
   document.getElementById("nextStepBtn").addEventListener("click", () => {
-    state.currentSectionIndex = Math.min(state.schema.sections.length - 1, state.currentSectionIndex + 1);
+    const visibleSections = getVisibleSections();
+    if (!isCurrentSectionValid()) {
+      state.showValidation = true;
+      renderForm();
+      return;
+    }
+    state.showValidation = false;
+    state.currentSectionIndex = Math.min(visibleSections.length - 1, state.currentSectionIndex + 1);
     renderForm();
   });
 
@@ -59,8 +70,11 @@ function createEmptyGroup(fields) {
 function renderForm() {
   const form = document.getElementById("citizenForm");
   form.innerHTML = "";
+  const visibleSections = getVisibleSections();
+  state.currentSectionIndex = Math.min(state.currentSectionIndex, visibleSections.length - 1);
+  const activeSectionErrors = getCurrentSectionErrors();
 
-  state.schema.sections.forEach((section, index) => {
+  visibleSections.forEach((section, index) => {
     const panel = document.createElement("section");
     panel.className = "section-panel";
     panel.hidden = index !== state.currentSectionIndex;
@@ -71,9 +85,9 @@ function renderForm() {
     panel.appendChild(header);
 
     if (section.repeatable) {
-      panel.appendChild(renderRepeatableSection(section));
+      panel.appendChild(renderRepeatableSection(section, activeSectionErrors));
     } else {
-      panel.appendChild(renderFieldGrid(section.id, section.fields, state.values[section.id]));
+      panel.appendChild(renderFieldGrid(section.id, section.fields, state.values[section.id], null, activeSectionErrors));
     }
 
     form.appendChild(panel);
@@ -82,9 +96,16 @@ function renderForm() {
   updateProgress();
 }
 
-function renderRepeatableSection(section) {
+function renderRepeatableSection(section, errors) {
   const wrap = document.createElement("div");
   wrap.className = "repeatable-list";
+
+  if (errors[section.id]) {
+    const errorEl = document.createElement("div");
+    errorEl.className = "field-error";
+    errorEl.textContent = errors[section.id];
+    wrap.appendChild(errorEl);
+  }
 
   const items = state.values[section.id];
   items.forEach((item, itemIndex) => {
@@ -93,7 +114,7 @@ function renderRepeatableSection(section) {
 
     const title = document.createElement("div");
     title.className = "repeatable-card__title";
-    title.innerHTML = `<strong>${section.item_label || "Mục"} ${itemIndex + 1}</strong>`;
+    title.innerHTML = `<strong>${section.item_label || "Mục"} ${itemIndex}</strong>`;
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -107,7 +128,7 @@ function renderRepeatableSection(section) {
     title.appendChild(removeBtn);
 
     card.appendChild(title);
-    card.appendChild(renderFieldGrid(section.id, section.fields, item, itemIndex));
+    card.appendChild(renderFieldGrid(section.id, section.fields, item, itemIndex, errors));
     wrap.appendChild(card);
   });
 
@@ -124,25 +145,34 @@ function renderRepeatableSection(section) {
   return wrap;
 }
 
-function renderFieldGrid(sectionId, fields, values, itemIndex = null) {
+function renderFieldGrid(sectionId, fields, values, itemIndex = null, errors = {}) {
   const grid = document.createElement("div");
   grid.className = "stack";
 
   for (let i = 0; i < fields.length; i += 2) {
     const row = document.createElement("div");
     row.className = "field-row";
-    row.appendChild(renderField(sectionId, fields[i], values, itemIndex));
+    const firstField = fields[i];
+    row.appendChild(renderField(sectionId, firstField, values, itemIndex, errors));
+    if (firstField.type === "textarea") {
+      grid.appendChild(row);
+      continue;
+    }
+
     if (fields[i + 1]) {
-      row.appendChild(renderField(sectionId, fields[i + 1], values, itemIndex));
+      row.appendChild(renderField(sectionId, fields[i + 1], values, itemIndex, errors));
     }
     grid.appendChild(row);
   }
   return grid;
 }
 
-function renderField(sectionId, field, values, itemIndex) {
+function renderField(sectionId, field, values, itemIndex, errors) {
   const wrap = document.createElement("div");
   wrap.className = "field";
+  if (field.type === "textarea") {
+    wrap.classList.add("field--full");
+  }
 
   const label = document.createElement("label");
   label.textContent = field.label;
@@ -154,10 +184,20 @@ function renderField(sectionId, field, values, itemIndex) {
   wrap.appendChild(label);
 
   const keyPath = itemIndex === null ? [sectionId, field.id] : [sectionId, itemIndex, field.id];
+  const fieldKey = keyPath.join(".");
+  const errorMessage = errors[fieldKey];
+  if (errorMessage) {
+    wrap.classList.add("is-invalid");
+  }
 
   let input;
   if (field.type === "textarea") {
     input = document.createElement("textarea");
+  } else if (field.type === "date") {
+    input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.maxLength = 10;
   } else if (field.type === "select") {
     input = document.createElement("select");
     const emptyOption = document.createElement("option");
@@ -192,26 +232,47 @@ function renderField(sectionId, field, values, itemIndex) {
 
   if (field.type !== "radio") {
     input.value = values[field.id] || "";
-    input.placeholder = field.placeholder || "";
-    input.addEventListener("input", (event) => updateValue(keyPath, event.target.value));
+    input.placeholder = field.placeholder || (field.type === "date" ? "dd/mm/yyyy" : "");
+    input.addEventListener("input", (event) => {
+      const nextValue = field.type === "date" ? formatDateInput(event.target.value) : event.target.value;
+      event.target.value = nextValue;
+      updateValue(keyPath, nextValue);
+    });
+    input.required = Boolean(field.required);
   }
 
   wrap.appendChild(input);
+  if (errorMessage) {
+    const errorEl = document.createElement("div");
+    errorEl.className = "field-error";
+    errorEl.textContent = errorMessage;
+    wrap.appendChild(errorEl);
+  }
   return wrap;
 }
 
 function updateValue(keyPath, nextValue) {
   if (keyPath.length === 2) {
     state.values[keyPath[0]][keyPath[1]] = nextValue;
+  } else {
+    state.values[keyPath[0]][keyPath[1]][keyPath[2]] = nextValue;
+  }
+
+  const visibleSections = getVisibleSections();
+  state.currentSectionIndex = Math.min(state.currentSectionIndex, visibleSections.length - 1);
+
+  if (state.showValidation) {
+    renderForm();
     return;
   }
-  state.values[keyPath[0]][keyPath[1]][keyPath[2]] = nextValue;
+  updateProgress();
 }
 
 function updateProgress() {
-  const total = state.schema.sections.length;
+  const visibleSections = getVisibleSections();
+  const total = visibleSections.length;
   const current = state.currentSectionIndex + 1;
-  document.getElementById("progressText").textContent = `Bước ${current}/${total}: ${state.schema.sections[state.currentSectionIndex].title}`;
+  document.getElementById("progressText").textContent = `Bước ${current}/${total}: ${visibleSections[state.currentSectionIndex].title}`;
   document.querySelector("#progressBar span").style.width = `${(current / total) * 100}%`;
 
   const prevBtn = document.getElementById("prevStepBtn");
@@ -220,17 +281,30 @@ function updateProgress() {
 
   const isFirstStep = state.currentSectionIndex === 0;
   const isLastStep = state.currentSectionIndex === total - 1;
+  const currentSectionValid = isCurrentSectionValid();
 
   prevBtn.disabled = isFirstStep;
   prevBtn.hidden = isFirstStep;
   nextBtn.hidden = isLastStep;
+  nextBtn.disabled = !isLastStep && !currentSectionValid;
   submitBtn.hidden = !isLastStep;
+  submitBtn.disabled = isLastStep && !currentSectionValid;
 }
 
 async function submitForm() {
   const messageEl = document.getElementById("formMessage");
+  const firstInvalidSectionIndex = getFirstInvalidSectionIndex();
+  if (firstInvalidSectionIndex !== -1) {
+    state.currentSectionIndex = firstInvalidSectionIndex;
+    state.showValidation = true;
+    renderForm();
+    messageEl.textContent = "Vui lòng nhập đầy đủ tất cả các trường bắt buộc trước khi gửi.";
+    messageEl.className = "form-message form-message--sheet is-error";
+    return;
+  }
+
   messageEl.textContent = "Đang gửi dữ liệu...";
-  messageEl.className = "form-message";
+  messageEl.className = "form-message form-message--sheet";
 
   const response = await fetch("/api/submissions", {
     method: "POST",
@@ -240,17 +314,136 @@ async function submitForm() {
 
   const result = await response.json();
   if (!response.ok) {
+    state.showValidation = true;
     const detail = result.fields ? ` ${Object.values(result.fields).join(" ")}` : "";
     messageEl.textContent = `${result.error || "Không thể gửi dữ liệu."}${detail}`;
-    messageEl.classList.add("is-error");
+    messageEl.className = "form-message form-message--sheet is-error";
+    renderForm();
     return;
   }
 
   messageEl.textContent = `${result.message} Mã phiếu: #${result.submission_id}.`;
-  messageEl.classList.add("is-success");
+  messageEl.className = "form-message form-message--sheet is-success";
   seedInitialValues();
   state.currentSectionIndex = 0;
+  state.showValidation = false;
   renderForm();
+}
+
+function isCurrentSectionValid() {
+  return Object.keys(getCurrentSectionErrors()).length === 0;
+}
+
+function getCurrentSectionErrors() {
+  const section = getVisibleSections()[state.currentSectionIndex];
+  return validateSection(section, state.values[section.id], state.showValidation);
+}
+
+function getFirstInvalidSectionIndex() {
+  const visibleSections = getVisibleSections();
+  for (let index = 0; index < visibleSections.length; index += 1) {
+    const section = visibleSections[index];
+    const errors = validateSection(section, state.values[section.id], true);
+    if (Object.keys(errors).length) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function validateSection(section, sectionValue, includeMessages) {
+  const errors = {};
+  if (section.repeatable) {
+    const items = Array.isArray(sectionValue) ? sectionValue : [];
+    if (items.length < (section.min_items || 0) && includeMessages) {
+      errors[section.id] = `Cần ít nhất ${section.min_items} ${section.item_label || "mục"}.`;
+    } else if (items.length < (section.min_items || 0)) {
+      errors[section.id] = "";
+    }
+    items.forEach((item, itemIndex) => {
+      section.fields.forEach((field) => {
+        const fieldValue = item?.[field.id];
+        if (!field.required || !isBlankValue(item?.[field.id])) {
+          if (field.type === "date" && !isBlankValue(fieldValue) && !isValidDateValue(fieldValue)) {
+            errors[[section.id, itemIndex, field.id].join(".")] = "Ngày phải theo định dạng dd/mm/yyyy.";
+          }
+          return;
+        }
+        if (includeMessages) {
+          errors[[section.id, itemIndex, field.id].join(".")] = `${field.label} là bắt buộc.`;
+        } else {
+          errors[[section.id, itemIndex, field.id].join(".")] = "";
+        }
+      });
+    });
+    return errors;
+  }
+
+  section.fields.forEach((field) => {
+    const fieldValue = sectionValue?.[field.id];
+    if (!field.required || !isBlankValue(sectionValue?.[field.id])) {
+      if (field.type === "date" && !isBlankValue(fieldValue) && !isValidDateValue(fieldValue)) {
+        errors[[section.id, field.id].join(".")] = "Ngày phải theo định dạng dd/mm/yyyy.";
+      }
+      return;
+    }
+    if (includeMessages) {
+      errors[[section.id, field.id].join(".")] = `${field.label} là bắt buộc.`;
+    } else {
+      errors[[section.id, field.id].join(".")] = "";
+    }
+  });
+  return errors;
+}
+
+function isBlankValue(value) {
+  if (value === null || value === undefined) {
+    return true;
+  }
+  return String(value).trim() === "";
+}
+
+function formatDateInput(value) {
+  const digits = String(value).replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) {
+    return digits;
+  }
+  if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function isValidDateValue(value) {
+  const raw = String(value).trim();
+  const match = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) {
+    return false;
+  }
+
+  const [, dayText, monthText, yearText] = match;
+  const day = Number.parseInt(dayText, 10);
+  const month = Number.parseInt(monthText, 10);
+  const year = Number.parseInt(yearText, 10);
+
+  if (month < 1 || month > 12 || day < 1) {
+    return false;
+  }
+
+  const lastDay = new Date(year, month, 0).getDate();
+  return day <= lastDay;
+}
+
+function getVisibleSections() {
+  return state.schema.sections.filter((section) => {
+    if (section.id !== "siblings") {
+      return true;
+    }
+
+    const totalChildrenRaw = state.values.family_basic?.total_children;
+    const totalChildren = Number.parseInt(totalChildrenRaw, 10);
+    return Number.isNaN(totalChildren) || totalChildren > 1;
+  });
 }
 
 async function bootAdminPage() {
