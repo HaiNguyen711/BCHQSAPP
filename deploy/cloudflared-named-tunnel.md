@@ -1,6 +1,6 @@
 # Cloudflare named tunnel cho URL ổn định
 
-Mục tiêu là thay `*.trycloudflare.com` bằng domain/subdomain ngắn hơn như `khaibao.tenmiencuaban.com`.
+Mục tiêu là thay `*.trycloudflare.com` bằng domain/subdomain ngắn hơn như `tranbien.tenmiencuaban.com`.
 
 ## Kết quả mong muốn
 
@@ -21,16 +21,16 @@ cloudflared tunnel create bchqsapp
 ```
 
 4. Tạo file config dựa trên `deploy/cloudflared-config.example.yml`.
-5. Trỏ hostname mong muốn, ví dụ `khaibao.tenmiencuaban.com`, vào tunnel:
+5. Trỏ hostname mong muốn, ví dụ `tranbien.tenmiencuaban.com`, vào tunnel:
 
 ```powershell
-cloudflared tunnel route dns bchqsapp khaibao.tenmiencuaban.com
+cloudflared tunnel route dns bchqsapp tranbien.tenmiencuaban.com
 ```
 
 6. Chạy app:
 
 ```powershell
-.\scripts\start_public.ps1 -PublicBaseUrl "https://khaibao.tenmiencuaban.com" -AdminToken "doi-token-moi"
+.\scripts\start_public.ps1 -PublicBaseUrl "https://tranbien.tenmiencuaban.com" -AdminToken "doi-token-moi"
 ```
 
 7. Chạy tunnel:
@@ -54,8 +54,8 @@ DNS hostname vẫn có thể trỏ vào cùng tunnel. Máy nào đang chạy `cl
 
 ## Gợi ý đặt URL
 
-- `khaibao.tenmiencuaban.com`
+- `tranbien.tenmiencuaban.com`
 - `form.tenmiencuaban.com`
 - `bchqs.tenmiencuaban.com`
 
-`khaibao.` là phương án rõ nghĩa và phù hợp nhất cho biểu mẫu khai báo công dân.
+`tranbien.` phù hợp khi muốn gắn hostname với địa bàn hoặc đơn vị cụ thể.

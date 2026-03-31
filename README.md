@@ -45,13 +45,14 @@ Sau đó mở:
 
 Quick tunnel như `trycloudflare.com` chỉ phù hợp để thử nhanh. Để có link ngắn, dễ nhớ và ổn định hơn, hãy dùng:
 
-1. Domain hoặc subdomain riêng, ví dụ `khaibao.tenmiencuaban.com`
+1. Domain hoặc subdomain riêng, ví dụ `tranbien.tenmiencuaban.com`
 2. Cloudflare named tunnel hoặc một reverse proxy ổn định trên VPS
 
 Tài liệu mẫu cho Cloudflare named tunnel nằm ở:
 
 - `deploy/cloudflared-named-tunnel.md`
 - `deploy/cloudflared-config.example.yml`
+- `deploy/MIGRATE_TO_NEW_MACHINE.md`
 
 ## Ghi chú
 
