@@ -26,9 +26,15 @@ $env:BCHQS_ADMIN_TOKEN = $AdminToken
 $env:BCHQS_PUBLIC_BASE_URL = $PublicBaseUrl
 
 $pythonCommand = Get-Command python -ErrorAction SilentlyContinue
+$pyLauncher = Get-Command py -ErrorAction SilentlyContinue
+$configuredPython = $env:BCHQS_PYTHON
 
-if (-not $pythonCommand) {
-    throw "Khong tim thay lenh 'python' trong PATH. Hay cai Python 3 va thu lai."
+if ($configuredPython -and (Test-Path $configuredPython)) {
+    & $configuredPython main.py
+} elseif ($pythonCommand) {
+    & $pythonCommand.Source main.py
+} elseif ($pyLauncher) {
+    & $pyLauncher.Source -3 main.py
+} else {
+    throw "Khong tim thay Python. Hay cai Python 3, hoac dat BCHQS_PYTHON tro toi python.exe."
 }
-
-& $pythonCommand.Source main.py
