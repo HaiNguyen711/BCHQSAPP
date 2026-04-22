@@ -1,55 +1,23 @@
 {
-  "title": "Phi\u1ebfu thu th\u1eadp th\u00f4ng tin BCHQS",
-  "description": "Web app thu th\u1eadp th\u00f4ng tin c\u00f4ng d\u00e2n ph\u1ee5c v\u1ee5 qu\u1ea3n l\u00fd h\u1ed3 s\u01a1 v\u00e0 c\u1eadp nh\u1eadt d\u1eef li\u1ec7u v\u00e0o \u1ee9ng d\u1ee5ng BCHQS.",
+  "title": "Phiếu thu thập thông tin BCHQS",
+  "description": "Web app thu thập thông tin công dân phục vụ quản lý hồ sơ và cập nhật dữ liệu vào ứng dụng BCHQS.",
   "sections": [
     {
       "id": "personal_basic",
-      "title": "Th\u00f4ng tin c\u00e1 nh\u00e2n",
-      "description": "C\u00e1c tr\u01b0\u1eddng \u0111\u01b0\u1ee3c t\u1ed5ng h\u1ee3p t\u1eeb bi\u1ec3u m\u1eabu th\u00f4ng tin c\u01a1 b\u1ea3n c\u1ee7a c\u00f4ng d\u00e2n.",
+      "title": "Thông tin cá nhân",
+      "description": "Các trường được tổng hợp từ biểu mẫu thông tin cơ bản của công dân.",
       "fields": [
-        {
-          "id": "full_name",
-          "label": "H\u1ecd v\u00e0 t\u00ean c\u00f4ng d\u00e2n",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "date_of_birth",
-          "label": "Ng\u00e0y th\u00e1ng n\u0103m sinh",
-          "type": "date",
-          "required": true
-        },
-        {
-          "id": "gender",
-          "label": "Gi\u1edbi t\u00ednh",
-          "type": "select",
-          "required": true,
-          "options": [
-            "Nam",
-            "N\u1eef"
-          ]
-        },
-        {
-          "id": "citizen_id_number",
-          "label": "S\u1ed1 c\u0103n c\u01b0\u1edbc c\u00f4ng d\u00e2n",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "phone",
-          "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i c\u00e1 nh\u00e2n",
-          "type": "tel",
-          "required": true
-        },
-        {
-          "id": "street_address",
-          "label": "\u0110\u1ecba ch\u1ec9, s\u1ed1 nh\u00e0",
-          "type": "text",
-          "required": true
-        },
+        { "id": "full_name", "label": "Họ và tên công dân", "type": "text", "required": true },
+        { "id": "birth_name", "label": "Họ tên khai sinh", "type": "text", "required": false },
+        { "id": "date_of_birth", "label": "Ngày tháng năm sinh", "type": "date", "required": true },
+        { "id": "gender", "label": "Giới tính", "type": "select", "required": true, "options": ["Nam", "Nữ"] },
+        { "id": "citizen_id_number", "label": "Số căn cước công dân", "type": "text", "required": true },
+        { "id": "phone", "label": "Số điện thoại cá nhân", "type": "tel", "required": true },
+        { "id": "birth_registration_place", "label": "Nơi đăng ký khai sinh", "type": "text", "required": false },
+        { "id": "street_address", "label": "Địa chỉ, số nhà", "type": "text", "required": true },
         {
           "id": "neighborhood",
-          "label": "Khu ph\u1ed1",
+          "label": "Khu phố",
           "type": "select",
           "required": true,
           "options": [
@@ -104,354 +72,146 @@
             "Bửu Long"
           ]
         },
-        {
-          "id": "ward",
-          "label": "Ph\u01b0\u1eddng",
-          "type": "text",
-          "required": true,
-          "default": "Tr\u1ea5n Bi\u00ean"
-        },
-        {
-          "id": "province",
-          "label": "T\u1ec9nh/Th\u00e0nh ph\u1ed1",
-          "type": "text",
-          "required": true,
-          "default": "\u0110\u1ed3ng Nai"
-        },
-        {
-          "id": "current_residence",
-          "label": "N\u01a1i \u1edf hi\u1ec7n t\u1ea1i",
-          "type": "textarea",
-          "required": true
-        },
-        {
-          "id": "hometown",
-          "label": "Qu\u00ea qu\u00e1n",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "ethnicity",
-          "label": "D\u00e2n t\u1ed9c",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "religion",
-          "label": "T\u00f4n gi\u00e1o",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "nationality",
-          "label": "Qu\u1ed1c t\u1ecbch",
-          "type": "text",
-          "required": true,
-          "default": "Vi\u1ec7t Nam"
-        },
-        {
-          "id": "family_background",
-          "label": "Th\u00e0nh ph\u1ea7n gia \u0111\u00ecnh",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "education_level",
-          "label": "Tr\u00ecnh \u0111\u1ed9 v\u0103n h\u00f3a",
-          "type": "text",
-          "required": true,
-          "placeholder": "V\u00ed d\u1ee5: 12/12"
-        },
+        { "id": "ward", "label": "Phường", "type": "text", "required": true, "default": "Trấn Biên" },
+        { "id": "province", "label": "Tỉnh/Thành phố", "type": "text", "required": true, "default": "Đồng Nai" },
+        { "id": "family_permanent_residence", "label": "Nơi thường trú của gia đình", "type": "textarea", "required": false },
+        { "id": "current_residence", "label": "Nơi ở hiện tại", "type": "textarea", "required": true },
+        { "id": "hometown", "label": "Quê quán", "type": "text", "required": true },
+        { "id": "ethnicity", "label": "Dân tộc", "type": "text", "required": true },
+        { "id": "religion", "label": "Tôn giáo", "type": "text", "required": true },
+        { "id": "nationality", "label": "Quốc tịch", "type": "text", "required": true, "default": "Việt Nam" },
+        { "id": "family_background", "label": "Thành phần gia đình", "type": "text", "required": true },
+        { "id": "personal_background", "label": "Thành phần bản thân", "type": "text", "required": false },
+        { "id": "education_level", "label": "Trình độ văn hóa", "type": "text", "required": true, "placeholder": "Ví dụ: 12/12" },
+        { "id": "graduation_year", "label": "Năm tốt nghiệp", "type": "number", "required": false },
         {
           "id": "training_level",
-          "label": "Tr\u00ecnh \u0111\u1ed9 \u0111\u00e0o t\u1ea1o",
+          "label": "Trình độ đào tạo",
           "type": "select",
           "required": true,
-          "options": [
-            "Không",
-            "Trung cấp",
-            "Cao đẳng",
-            "Đại học"
-          ]
+          "options": ["Không", "Trung cấp", "Cao đẳng", "Đại học", "Sau đại học"]
         },
-        {
-          "id": "major",
-          "label": "Chuy\u00ean ng\u00e0nh \u0111\u00e0o t\u1ea1o",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "occupation",
-          "label": "Ngh\u1ec1 nghi\u1ec7p hi\u1ec7n t\u1ea1i",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "workplace",
-          "label": "N\u01a1i l\u00e0m vi\u1ec7c",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "youth_union_join_date",
-          "label": "Ng\u00e0y v\u00e0o \u0110o\u00e0n",
-          "type": "date",
-          "required": false
-        },
-        {
-          "id": "party_join_date",
-          "label": "Ng\u00e0y v\u00e0o \u0110\u1ea3ng",
-          "type": "date",
-          "required": false
-        }
+        { "id": "major", "label": "Chuyên ngành đào tạo", "type": "text", "required": true },
+        { "id": "foreign_language", "label": "Trình độ ngoại ngữ", "type": "text", "required": false },
+        { "id": "occupation", "label": "Nghề nghiệp hiện tại", "type": "text", "required": true },
+        { "id": "salary_grade", "label": "Lương ngạch", "type": "text", "required": false },
+        { "id": "salary_step", "label": "Bậc lương", "type": "text", "required": false },
+        { "id": "workplace", "label": "Nơi làm việc", "type": "text", "required": true },
+        { "id": "youth_union_join_date", "label": "Ngày vào Đoàn", "type": "date", "required": false },
+        { "id": "party_join_date", "label": "Ngày vào Đảng", "type": "date", "required": false },
+        { "id": "party_official_date", "label": "Ngày chính thức vào Đảng", "type": "date", "required": false },
+        { "id": "reward_record", "label": "Khen thưởng", "type": "textarea", "required": false },
+        { "id": "discipline_record", "label": "Kỷ luật", "type": "textarea", "required": false }
       ]
     },
     {
       "id": "personal_history",
-      "title": "L\u00fd l\u1ecbch b\u1ea3n th\u00e2n",
-      "description": "M\u1ed7i d\u00f2ng m\u00f4 t\u1ea3 giai \u0111o\u1ea1n h\u1ecdc t\u1eadp, l\u00e0m vi\u1ec7c ho\u1eb7c c\u01b0 tr\u00fa c\u1ee7a c\u00f4ng d\u00e2n.",
+      "title": "Lý lịch bản thân",
+      "description": "Mỗi dòng mô tả giai đoạn học tập, làm việc hoặc cư trú của công dân.",
       "repeatable": true,
       "min_items": 1,
-      "item_label": "Giai \u0111o\u1ea1n",
+      "item_label": "Giai đoạn",
       "fields": [
-        {
-          "id": "stage_name",
-          "label": "T\u00ean giai \u0111o\u1ea1n",
-          "type": "text",
-          "required": true,
-          "placeholder": "V\u00ed d\u1ee5: C\u1ea5p 1, C\u1ea5p 2, \u0110\u1ea1i h\u1ecdc"
-        },
-        {
-          "id": "from_year",
-          "label": "T\u1eeb n\u0103m",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "to_year",
-          "label": "\u0110\u1ebfn n\u0103m",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "summary",
-          "label": "H\u1ecdc g\u00ec ho\u1eb7c l\u00e0m g\u00ec, \u1edf \u0111\u00e2u",
-          "type": "textarea",
-          "required": true
-        }
+        { "id": "stage_name", "label": "Tên giai đoạn", "type": "text", "required": true, "placeholder": "Ví dụ: Cấp 1, Cấp 2, Đại học" },
+        { "id": "from_year", "label": "Từ năm", "type": "number", "required": true },
+        { "id": "to_year", "label": "Đến năm", "type": "number", "required": true },
+        { "id": "summary", "label": "Học gì hoặc làm gì, ở đâu", "type": "textarea", "required": true }
       ]
     },
     {
       "id": "family_basic",
-      "title": "Th\u00f4ng tin gia \u0111\u00ecnh",
-      "description": "Th\u00f4ng tin c\u01a1 b\u1ea3n v\u1ec1 cha m\u1eb9 v\u00e0 v\u1ecb tr\u00ed c\u1ee7a c\u00f4ng d\u00e2n trong gia \u0111\u00ecnh.",
+      "title": "Thông tin gia đình",
+      "description": "Thông tin cơ bản về cha mẹ và vị trí của công dân trong gia đình.",
       "fields": [
-        {
-          "id": "father_name",
-          "label": "H\u1ecd v\u00e0 t\u00ean cha",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "father_date_of_birth",
-          "label": "Ng\u00e0y th\u00e1ng n\u0103m sinh cha",
-          "type": "date",
-          "required": true
-        },
-        {
-          "id": "father_phone",
-          "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i cha",
-          "type": "tel",
-          "required": true
-        },
-        {
-          "id": "father_current_residence",
-          "label": "N\u01a1i \u1edf hi\u1ec7n t\u1ea1i c\u1ee7a cha",
-          "type": "textarea",
-          "required": true
-        },
-        {
-          "id": "father_occupation",
-          "label": "Ngh\u1ec1 nghi\u1ec7p cha",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "father_status",
-          "label": "T\u00ecnh tr\u1ea1ng cha",
-          "type": "radio",
-          "required": true,
-          "options": [
-            "S\u1ed1ng",
-            "Ch\u1ebft"
-          ]
-        },
-        {
-          "id": "mother_name",
-          "label": "H\u1ecd v\u00e0 t\u00ean m\u1eb9",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "mother_date_of_birth",
-          "label": "Ng\u00e0y th\u00e1ng n\u0103m sinh m\u1eb9",
-          "type": "date",
-          "required": true
-        },
-        {
-          "id": "mother_phone",
-          "label": "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i m\u1eb9",
-          "type": "tel",
-          "required": true
-        },
-        {
-          "id": "mother_current_residence",
-          "label": "N\u01a1i \u1edf hi\u1ec7n t\u1ea1i c\u1ee7a m\u1eb9",
-          "type": "textarea",
-          "required": true
-        },
-        {
-          "id": "mother_occupation",
-          "label": "Ngh\u1ec1 nghi\u1ec7p m\u1eb9",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "mother_status",
-          "label": "T\u00ecnh tr\u1ea1ng m\u1eb9",
-          "type": "radio",
-          "required": true,
-          "options": [
-            "S\u1ed1ng",
-            "Ch\u1ebft"
-          ]
-        },
-        {
-          "id": "total_children",
-          "label": "Nh\u00e0 c\u00f3 bao nhi\u00eau con",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "birth_order",
-          "label": "B\u1ea3n th\u00e2n l\u00e0 con th\u1ee9 m\u1ea5y",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "daughters_count",
-          "label": "Trong nh\u00e0 c\u00f3 bao nhi\u00eau con g\u00e1i",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "sons_count",
-          "label": "Trong nh\u00e0 c\u00f3 bao nhi\u00eau con trai",
-          "type": "number",
-          "required": true
-        }
+        { "id": "father_name", "label": "Họ và tên cha", "type": "text", "required": true },
+        { "id": "father_date_of_birth", "label": "Ngày tháng năm sinh cha", "type": "date", "required": true },
+        { "id": "father_phone", "label": "Số điện thoại cha", "type": "tel", "required": true },
+        { "id": "father_current_residence", "label": "Nơi ở hiện tại của cha", "type": "textarea", "required": true },
+        { "id": "father_occupation", "label": "Nghề nghiệp cha", "type": "text", "required": true },
+        { "id": "father_status", "label": "Tình trạng cha", "type": "radio", "required": true, "options": ["Sống", "Chết"] },
+        { "id": "mother_name", "label": "Họ và tên mẹ", "type": "text", "required": true },
+        { "id": "mother_date_of_birth", "label": "Ngày tháng năm sinh mẹ", "type": "date", "required": true },
+        { "id": "mother_phone", "label": "Số điện thoại mẹ", "type": "tel", "required": true },
+        { "id": "mother_current_residence", "label": "Nơi ở hiện tại của mẹ", "type": "textarea", "required": true },
+        { "id": "mother_occupation", "label": "Nghề nghiệp mẹ", "type": "text", "required": true },
+        { "id": "mother_status", "label": "Tình trạng mẹ", "type": "radio", "required": true, "options": ["Sống", "Chết"] },
+        { "id": "total_children", "label": "Cha mẹ có bao nhiêu người con", "type": "number", "required": true },
+        { "id": "birth_order", "label": "Bản thân là con thứ mấy", "type": "number", "required": true },
+        { "id": "daughters_count", "label": "Trong nhà có bao nhiêu con gái", "type": "number", "required": true },
+        { "id": "sons_count", "label": "Trong nhà có bao nhiêu con trai", "type": "number", "required": true },
+        { "id": "family_notes", "label": "Ghi chú thêm về tình hình kinh tế/chính trị gia đình", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "marital_basic",
+      "title": "Thông tin hôn nhân",
+      "description": "Thông tin vợ/chồng và con cái để hoàn thiện hồ sơ lý lịch.",
+      "fields": [
+        { "id": "marital_status", "label": "Tình trạng hôn nhân", "type": "select", "required": false, "options": ["Chưa kết hôn", "Đã kết hôn"] },
+        { "id": "spouse_name", "label": "Họ tên vợ/chồng", "type": "text", "required": false },
+        { "id": "spouse_date_of_birth", "label": "Ngày tháng năm sinh vợ/chồng", "type": "date", "required": false },
+        { "id": "spouse_occupation", "label": "Nghề nghiệp vợ/chồng", "type": "text", "required": false },
+        { "id": "spouse_current_residence", "label": "Nơi ở hiện tại của vợ/chồng", "type": "textarea", "required": false },
+        { "id": "children_count", "label": "Bản thân đã có bao nhiêu con", "type": "number", "required": false },
+        { "id": "spouse_notes", "label": "Ghi chú thêm về vợ/chồng", "type": "textarea", "required": false }
       ]
     },
     {
       "id": "siblings",
-      "title": "Th\u00f4ng tin anh ch\u1ecb em",
-      "description": "C\u00f3 th\u1ec3 th\u00eam nhi\u1ec1u anh/ch\u1ecb/em trong gia \u0111\u00ecnh.",
+      "title": "Thông tin anh chị em",
+      "description": "Có thể thêm nhiều anh/chị/em trong gia đình.",
       "repeatable": true,
       "min_items": 0,
-      "item_label": "Anh/ch\u1ecb/em",
+      "item_label": "Anh/chị/em",
       "fields": [
-        {
-          "id": "full_name",
-          "label": "H\u1ecd v\u00e0 t\u00ean anh/ch\u1ecb/em",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "date_of_birth",
-          "label": "Ng\u00e0y th\u00e1ng n\u0103m sinh",
-          "type": "date",
-          "required": true
-        },
-        {
-          "id": "relation",
-          "label": "Quan h\u1ec7 v\u1edbi c\u00f4ng d\u00e2n",
-          "type": "select",
-          "required": true,
-          "options": [
-            "Anh trai",
-            "Ch\u1ecb g\u00e1i",
-            "Em trai",
-            "Em g\u00e1i"
-          ]
-        },
-        {
-          "id": "occupation",
-          "label": "Ngh\u1ec1 nghi\u1ec7p",
-          "type": "text",
-          "required": true
-        },
-        {
-          "id": "workplace",
-          "label": "N\u01a1i h\u1ecdc t\u1eadp/l\u00e0m vi\u1ec7c",
-          "type": "text",
-          "required": true
-        }
+        { "id": "full_name", "label": "Họ và tên anh/chị/em", "type": "text", "required": true },
+        { "id": "date_of_birth", "label": "Ngày tháng năm sinh", "type": "date", "required": true },
+        { "id": "relation", "label": "Quan hệ với công dân", "type": "select", "required": true, "options": ["Anh trai", "Chị gái", "Em trai", "Em gái"] },
+        { "id": "occupation", "label": "Nghề nghiệp", "type": "text", "required": true },
+        { "id": "workplace", "label": "Nơi học tập/làm việc", "type": "text", "required": true },
+        { "id": "current_residence", "label": "Nơi ở hiện tại", "type": "textarea", "required": false },
+        { "id": "notes", "label": "Ghi chú thêm", "type": "textarea", "required": false }
+      ]
+    },
+    {
+      "id": "children",
+      "title": "Thông tin con",
+      "description": "Khai thêm thông tin con của công dân nếu đã có gia đình.",
+      "repeatable": true,
+      "min_items": 0,
+      "item_label": "Con",
+      "fields": [
+        { "id": "full_name", "label": "Họ và tên con", "type": "text", "required": true },
+        { "id": "date_of_birth", "label": "Ngày tháng năm sinh", "type": "date", "required": true },
+        { "id": "occupation", "label": "Học tập/Nghề nghiệp", "type": "text", "required": false },
+        { "id": "current_residence", "label": "Nơi ở hiện tại", "type": "textarea", "required": false },
+        { "id": "notes", "label": "Ghi chú thêm", "type": "textarea", "required": false }
       ]
     },
     {
       "id": "father_history",
-      "title": "L\u00fd l\u1ecbch cha",
-      "description": "T\u1eebng giai \u0111o\u1ea1n t\u1eeb nh\u1ecf \u0111\u1ebfn hi\u1ec7n t\u1ea1i c\u1ee7a cha.",
+      "title": "Lý lịch cha",
+      "description": "Từng giai đoạn từ nhỏ đến hiện tại của cha.",
       "repeatable": true,
       "min_items": 1,
-      "item_label": "Giai \u0111o\u1ea1n c\u1ee7a cha",
+      "item_label": "Giai đoạn của cha",
       "fields": [
-        {
-          "id": "from_year",
-          "label": "T\u1eeb n\u0103m",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "to_year",
-          "label": "\u0110\u1ebfn n\u0103m",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "summary",
-          "label": "\u1ede \u0111\u00e2u, l\u00e0m g\u00ec",
-          "type": "textarea",
-          "required": true
-        }
+        { "id": "from_year", "label": "Từ năm", "type": "number", "required": true },
+        { "id": "to_year", "label": "Đến năm", "type": "number", "required": true },
+        { "id": "summary", "label": "Ở đâu, làm gì", "type": "textarea", "required": true }
       ]
     },
     {
       "id": "mother_history",
-      "title": "L\u00fd l\u1ecbch m\u1eb9",
-      "description": "T\u1eebng giai \u0111o\u1ea1n t\u1eeb nh\u1ecf \u0111\u1ebfn hi\u1ec7n t\u1ea1i c\u1ee7a m\u1eb9.",
+      "title": "Lý lịch mẹ",
+      "description": "Từng giai đoạn từ nhỏ đến hiện tại của mẹ.",
       "repeatable": true,
       "min_items": 1,
-      "item_label": "Giai \u0111o\u1ea1n c\u1ee7a m\u1eb9",
+      "item_label": "Giai đoạn của mẹ",
       "fields": [
-        {
-          "id": "from_year",
-          "label": "T\u1eeb n\u0103m",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "to_year",
-          "label": "\u0110\u1ebfn n\u0103m",
-          "type": "number",
-          "required": true
-        },
-        {
-          "id": "summary",
-          "label": "\u1ede \u0111\u00e2u, l\u00e0m g\u00ec",
-          "type": "textarea",
-          "required": true
-        }
+        { "id": "from_year", "label": "Từ năm", "type": "number", "required": true },
+        { "id": "to_year", "label": "Đến năm", "type": "number", "required": true },
+        { "id": "summary", "label": "Ở đâu, làm gì", "type": "textarea", "required": true }
       ]
     }
   ]

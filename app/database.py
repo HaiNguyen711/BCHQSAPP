@@ -12,6 +12,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font
 
 from .config import DATA_DIR, DB_PATH
+from .profile_docx import generate_profile_docx
+from .schema import load_schema
 
 FORM_LABELS = {
     "1": "Đăng ký NVQS",
@@ -90,11 +92,11 @@ def save_submission(payload: dict[str, Any], form_code: str) -> int:
             (
                 form_code,
                 form_label,
-                personal.get("full_name", "").strip(),
-                personal.get("citizen_id_number", "").strip(),
-                personal.get("phone", "").strip(),
-                personal.get("hometown", "").strip(),
-                personal.get("current_residence", "").strip(),
+                str(personal.get("full_name", "")).strip(),
+                str(personal.get("citizen_id_number", "")).strip(),
+                str(personal.get("phone", "")).strip(),
+                str(personal.get("hometown", "")).strip(),
+                str(personal.get("current_residence", "")).strip(),
                 created_at,
                 json.dumps(payload, ensure_ascii=False),
             ),
@@ -135,12 +137,23 @@ def list_submissions() -> list[dict[str, Any]]:
             ORDER BY id DESC
             """
         ).fetchall()
-    items = []
-    for row in rows:
-        item = dict(row)
-        item["payload"] = json.loads(item.pop("payload_json"))
-        items.append(item)
-    return items
+    return [_deserialize_submission_row(row) for row in rows]
+
+
+def get_submission(submission_id: int) -> dict[str, Any] | None:
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT id, form_code, form_label, full_name, citizen_id_number, phone, hometown,
+                   current_residence, created_at, payload_json
+            FROM submissions
+            WHERE id = ?
+            """,
+            (submission_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return _deserialize_submission_row(row)
 
 
 def list_form_interest_logs() -> list[dict[str, Any]]:
@@ -171,26 +184,17 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
     for item in rows:
         payload = item.get("payload", {})
         personal = payload.get("personal_basic", {})
-        created_at_raw = item.get("created_at")
-        try:
-            created_at = datetime.fromisoformat(created_at_raw)
-        except Exception:
-            created_at = None
+        created_at = _parse_iso_datetime(item.get("created_at"))
         if created_at and created_at.date() == now_date:
             today_count += 1
         _add_counter_value(submitted_form_counter, item.get("form_label"))
-
         _add_counter_value(neighborhood_counter, personal.get("neighborhood"))
         _add_counter_value(birth_year_counter, _extract_birth_year(personal.get("date_of_birth")))
         _add_counter_value(ward_counter, personal.get("ward"))
         _add_counter_value(training_counter, personal.get("training_level"), case_insensitive=True)
 
     for item in interest_logs:
-        created_at_raw = item.get("created_at")
-        try:
-            created_at = datetime.fromisoformat(created_at_raw)
-        except Exception:
-            created_at = None
+        created_at = _parse_iso_datetime(item.get("created_at"))
         if created_at and created_at.date() == now_date:
             today_interest_count += 1
         _add_counter_value(interest_form_counter, item.get("form_label"))
@@ -200,7 +204,9 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
         "today_submissions": today_count,
         "total_interest_logs": len(interest_logs),
         "today_interest_logs": today_interest_count,
-        "unique_citizen_ids": len({row.get("citizen_id_number", "").strip() for row in rows if row.get("citizen_id_number")}),
+        "unique_citizen_ids": len(
+            {str(row.get("citizen_id_number", "")).strip() for row in rows if row.get("citizen_id_number")}
+        ),
         "top_neighborhoods": _top_counter_items(neighborhood_counter),
         "top_birth_years": _top_counter_items(birth_year_counter),
         "top_wards": _top_counter_items(ward_counter),
@@ -212,122 +218,68 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
 
 def export_csv() -> str:
     rows = list_submissions()
+    headers, flat_rows = build_export_matrix(rows)
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(
-        [
-            "ID",
-            "Loai phieu",
-            "Ho ten",
-            "CCCD",
-            "So dien thoai",
-            "Que quan",
-            "Noi o hien tai",
-            "Thoi gian tao",
-            "Du lieu JSON",
-        ]
-    )
-    for row in rows:
-        writer.writerow(
-            [
-                row["id"],
-                row["form_label"],
-                row["full_name"],
-                row["citizen_id_number"],
-                row["phone"],
-                row["hometown"],
-                row["current_residence"],
-                row["created_at"],
-                json.dumps(row["payload"], ensure_ascii=False),
-            ]
-        )
+    writer.writerow([label for _, label in headers])
+    for row in flat_rows:
+        writer.writerow([row.get(key, "") for key, _ in headers])
     return buffer.getvalue()
 
 
 def export_excel() -> bytes:
     rows = list_submissions()
     summary = summarize_submissions(rows)
+    headers, flat_rows = build_export_matrix(rows)
 
     workbook = Workbook()
     summary_sheet = workbook.active
     summary_sheet.title = "Dashboard"
-    summary_sheet.append(["Chi so", "Gia tri"])
-    summary_sheet.append(["Tong so phieu", summary["total_submissions"]])
-    summary_sheet.append(["So phieu hom nay", summary["today_submissions"]])
-    summary_sheet.append(["So CCCD duy nhat", summary["unique_citizen_ids"]])
-    summary_sheet.append(["Luot chon phieu dang phat trien", summary["total_interest_logs"]])
-    summary_sheet.append(["Luot chon hom nay", summary["today_interest_logs"]])
+    summary_sheet.append(["Chỉ số", "Giá trị"])
+    summary_sheet.append(["Tổng số phiếu", summary["total_submissions"]])
+    summary_sheet.append(["Số phiếu hôm nay", summary["today_submissions"]])
+    summary_sheet.append(["Số CCCD duy nhất", summary["unique_citizen_ids"]])
+    summary_sheet.append(["Lượt chọn phiếu đang phát triển", summary["total_interest_logs"]])
+    summary_sheet.append(["Lượt chọn hôm nay", summary["today_interest_logs"]])
     summary_sheet.append([])
-    summary_sheet.append(["Loai phieu da nop", "So luong"])
+    summary_sheet.append(["Loại phiếu đã nộp", "Số lượng"])
     for item in summary["submitted_forms"]:
         summary_sheet.append([item["label"], item["count"]])
     summary_sheet.append([])
-    summary_sheet.append(["Loai phieu dang phat trien duoc chon", "So luong"])
+    summary_sheet.append(["Loại phiếu đang phát triển được chọn", "Số lượng"])
     for item in summary["interest_forms"]:
         summary_sheet.append([item["label"], item["count"]])
     summary_sheet.append([])
-    summary_sheet.append(["Top khu pho", "So luong"])
+    summary_sheet.append(["Top khu phố", "Số lượng"])
     for item in summary["top_neighborhoods"]:
         summary_sheet.append([item["label"], item["count"]])
     summary_sheet.append([])
-    summary_sheet.append(["Top nam sinh", "So luong"])
+    summary_sheet.append(["Top năm sinh", "Số lượng"])
     for item in summary["top_birth_years"]:
         summary_sheet.append([item["label"], item["count"]])
     summary_sheet.append([])
-    summary_sheet.append(["Top phuong", "So luong"])
+    summary_sheet.append(["Top phường", "Số lượng"])
     for item in summary["top_wards"]:
         summary_sheet.append([item["label"], item["count"]])
     summary_sheet.append([])
-    summary_sheet.append(["Top trinh do dao tao", "So luong"])
+    summary_sheet.append(["Top trình độ đào tạo", "Số lượng"])
     for item in summary["top_training_levels"]:
         summary_sheet.append([item["label"], item["count"]])
 
-    data_sheet = workbook.create_sheet("Du lieu")
-    headers = [
-        "ID",
-        "Loai phieu",
-        "Ho ten",
-        "CCCD",
-        "So dien thoai",
-        "Que quan",
-        "Noi o hien tai",
-        "Tinh/Thanh",
-        "Phuong",
-        "Nghe nghiep",
-        "Trinh do dao tao",
-        "Thoi gian tao",
-        "Du lieu JSON",
-    ]
-    data_sheet.append(headers)
-    for row in rows:
-        personal = row["payload"].get("personal_basic", {})
-        data_sheet.append(
-            [
-                row["id"],
-                row["form_label"],
-                row["full_name"],
-                row["citizen_id_number"],
-                row["phone"],
-                row["hometown"],
-                row["current_residence"],
-                personal.get("province", ""),
-                personal.get("ward", ""),
-                personal.get("occupation", ""),
-                personal.get("training_level", ""),
-                row["created_at"],
-                json.dumps(row["payload"], ensure_ascii=False),
-            ]
-        )
+    data_sheet = workbook.create_sheet("Dữ liệu")
+    data_sheet.append([label for _, label in headers])
+    for row in flat_rows:
+        data_sheet.append([row.get(key, "") for key, _ in headers])
 
     interest_sheet = workbook.create_sheet("Tracking")
     interest_headers = [
         "ID",
-        "Loai phieu",
-        "Ma phieu",
-        "Nguon",
+        "Loại phiếu",
+        "Mã phiếu",
+        "Nguồn",
         "IP",
         "User agent",
-        "Thoi gian tao",
+        "Thời gian tạo",
     ]
     interest_sheet.append(interest_headers)
     for row in list_form_interest_logs():
@@ -352,11 +304,113 @@ def export_excel() -> bytes:
             for cell in column_cells:
                 value = "" if cell.value is None else str(cell.value)
                 max_length = max(max_length, len(value))
-            sheet.column_dimensions[column_letter].width = min(max_length + 2, 42)
+            sheet.column_dimensions[column_letter].width = min(max_length + 2, 48)
 
     buffer = io.BytesIO()
     workbook.save(buffer)
     return buffer.getvalue()
+
+
+def export_profile_docx(submission_id: int) -> bytes | None:
+    submission = get_submission(submission_id)
+    if submission is None:
+        return None
+    return generate_profile_docx(submission)
+
+
+def build_export_matrix(rows: list[dict[str, Any]]) -> tuple[list[tuple[str, str]], list[dict[str, str]]]:
+    schema = load_schema()
+    headers: list[tuple[str, str]] = [
+        ("id", "ID"),
+        ("form_code", "Mã phiếu"),
+        ("form_label", "Loại phiếu"),
+        ("created_at", "Thời gian tạo"),
+    ]
+
+    repeatable_lengths = {
+        section["id"]: _max_repeatable_length(rows, section["id"])
+        for section in schema.get("sections", [])
+        if section.get("repeatable")
+    }
+
+    for section in schema.get("sections", []):
+        section_id = section.get("id", "")
+        section_title = section.get("title", section_id)
+        if section.get("repeatable"):
+            for index in range(repeatable_lengths.get(section_id, 0)):
+                for field in section.get("fields", []):
+                    field_id = field.get("id", "")
+                    field_label = field.get("label", field_id)
+                    headers.append(
+                        (
+                            f"{section_id}.{index}.{field_id}",
+                            f"{section_title} {index + 1} - {field_label}",
+                        )
+                    )
+            continue
+
+        for field in section.get("fields", []):
+            field_id = field.get("id", "")
+            field_label = field.get("label", field_id)
+            headers.append((f"{section_id}.{field_id}", f"{section_title} - {field_label}"))
+
+    flat_rows: list[dict[str, str]] = []
+    for row in rows:
+        payload = row.get("payload", {})
+        flat: dict[str, str] = {
+            "id": str(row.get("id", "")),
+            "form_code": str(row.get("form_code", "")),
+            "form_label": str(row.get("form_label", "")),
+            "created_at": str(row.get("created_at", "")),
+        }
+        for section in schema.get("sections", []):
+            section_id = section.get("id", "")
+            section_payload = payload.get(section_id)
+            if section.get("repeatable"):
+                items = section_payload if isinstance(section_payload, list) else []
+                for index in range(repeatable_lengths.get(section_id, 0)):
+                    item_payload = items[index] if index < len(items) and isinstance(items[index], dict) else {}
+                    for field in section.get("fields", []):
+                        field_id = field.get("id", "")
+                        flat[f"{section_id}.{index}.{field_id}"] = _stringify_value(item_payload.get(field_id))
+                continue
+
+            section_payload = section_payload if isinstance(section_payload, dict) else {}
+            for field in section.get("fields", []):
+                field_id = field.get("id", "")
+                flat[f"{section_id}.{field_id}"] = _stringify_value(section_payload.get(field_id))
+        flat_rows.append(flat)
+    return headers, flat_rows
+
+
+def _deserialize_submission_row(row: sqlite3.Row) -> dict[str, Any]:
+    item = dict(row)
+    payload_json = item.pop("payload_json")
+    try:
+        item["payload"] = json.loads(payload_json)
+    except json.JSONDecodeError:
+        item["payload"] = {}
+    return item
+
+
+def _max_repeatable_length(rows: list[dict[str, Any]], section_id: str) -> int:
+    max_length = 0
+    for row in rows:
+        payload = row.get("payload", {})
+        items = payload.get(section_id)
+        if isinstance(items, list):
+            max_length = max(max_length, len(items))
+    return max_length
+
+
+def _stringify_value(value: Any) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, list):
+        return " | ".join(_stringify_value(item) for item in value if _stringify_value(item))
+    if isinstance(value, dict):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value).strip()
 
 
 def _top_counter_items(counter: Counter[str], limit: int = 5) -> list[dict[str, Any]]:
@@ -380,12 +434,10 @@ def _extract_birth_year(raw_value: Any) -> str:
     value = str(raw_value or "").strip()
     if not value:
         return ""
-
     if "/" in value:
         parts = value.split("/")
         if len(parts) == 3 and len(parts[-1]) == 4 and parts[-1].isdigit():
             return parts[-1]
-
     if "-" in value:
         parts = value.split("-")
         if len(parts) == 3:
@@ -393,15 +445,18 @@ def _extract_birth_year(raw_value: Any) -> str:
                 return parts[0]
             if len(parts[-1]) == 4 and parts[-1].isdigit():
                 return parts[-1]
-
     return value if len(value) == 4 and value.isdigit() else ""
 
 
+def _parse_iso_datetime(value: Any) -> datetime | None:
+    try:
+        return datetime.fromisoformat(str(value))
+    except Exception:
+        return None
+
+
 def _ensure_column(conn: sqlite3.Connection, table_name: str, column_name: str, definition: str) -> None:
-    existing_columns = {
-        row["name"]
-        for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()
-    }
+    existing_columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table_name})").fetchall()}
     if column_name not in existing_columns:
         conn.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}")
 
@@ -411,15 +466,14 @@ def _resolve_db_path() -> str:
     if _RESOLVED_DB_PATH is not None:
         return _RESOLVED_DB_PATH
 
-    recovered_path = str(DB_PATH.with_name("bchqs.runtime.db"))
-    candidates = [str(DB_PATH), recovered_path]
-
+    runtime_path = str(DB_PATH.with_name("bchqs.runtime.db"))
+    candidates = [str(DB_PATH), runtime_path]
     for candidate in candidates:
         if _is_usable_sqlite(candidate):
             _RESOLVED_DB_PATH = candidate
             return candidate
 
-    _RESOLVED_DB_PATH = recovered_path
+    _RESOLVED_DB_PATH = runtime_path
     return _RESOLVED_DB_PATH
 
 

@@ -28,6 +28,8 @@ from .database import (
     FORM_LABELS,
     export_csv,
     export_excel,
+    export_profile_docx,
+    get_submission,
     init_db,
     list_form_interest_logs,
     list_submissions,
@@ -110,6 +112,29 @@ class AppHandler(BaseHTTPRequestHandler):
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
             self.send_header("Content-Disposition", 'attachment; filename="bchqs-submissions.xlsx"')
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+            return
+        profile_match = re.fullmatch(r"/api/admin/submissions/(\d+)/profile\.docx", path)
+        if profile_match:
+            if not self._is_admin(parsed.query):
+                self.send_error(HTTPStatus.UNAUTHORIZED)
+                return
+            submission_id = int(profile_match.group(1))
+            content = export_profile_docx(submission_id)
+            submission = get_submission(submission_id)
+            if content is None or submission is None:
+                self.send_error(HTTPStatus.NOT_FOUND)
+                return
+            safe_name = self._slugify_filename(submission.get("full_name") or f"ho-so-{submission_id}")
+            filename = f"{safe_name}-ly-lich-nvqs.docx"
+            self.send_response(HTTPStatus.OK)
+            self.send_header(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            )
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
             self.send_header("Content-Length", str(len(content)))
             self.end_headers()
             self.wfile.write(content)
@@ -401,6 +426,11 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(content)))
         self.end_headers()
         self.wfile.write(content)
+
+    def _slugify_filename(self, value: str) -> str:
+        slug = re.sub(r"[^\w\-]+", "-", value.strip().lower(), flags=re.UNICODE)
+        slug = slug.strip("-")
+        return slug or "ho-so"
 
     def log_message(self, format: str, *args) -> None:
         return

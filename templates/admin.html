@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản trị BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260421-admin-tracking-1">
+  <link rel="stylesheet" href="/static/styles.css?v=20260422-admin-layout-3">
 </head>
 <body data-page="admin">
   <main class="shell shell--admin shell--landing">
@@ -72,7 +72,7 @@
       <div id="adminSummaryLists" class="summary-grid"></div>
 
       <div class="admin-toolbar admin-toolbar--actions">
-        <input id="adminSearchCitizenId" type="search" placeholder="Tìm theo số CCCD">
+        <input id="adminSearchCitizenId" type="search" placeholder="Tìm theo tất cả thông tin công dân">
         <button id="exportExcelBtn" type="button" class="primary-btn">Xuất Excel</button>
         <button id="exportBtn" type="button" class="ghost-btn">Xuất CSV</button>
       </div>
@@ -97,6 +97,70 @@
     </section>
   </main>
 
-  <script src="/static/app.js?v=20260421-admin-tracking-1"></script>
+  <section id="adminModal" class="admin-modal" hidden onclick="window.forceCloseAdminModal && window.forceCloseAdminModal(event)">
+    <div id="adminModalDialog" class="admin-modal__dialog">
+      <div class="admin-modal__header">
+        <div class="admin-modal__heading">
+          <div id="adminModalEyebrow" class="admin-modal__eyebrow"></div>
+          <h2 id="adminModalTitle">Chi tiết hồ sơ</h2>
+          <p id="adminModalSubtitle" class="admin-modal__subtitle"></p>
+        </div>
+        <div id="adminModalActions" class="admin-modal__actions"></div>
+        <a
+          id="adminModalCloseBtn"
+          href="/admin"
+          class="ghost-btn admin-modal__close"
+          onclick="if (window.forceCloseAdminModal) { window.forceCloseAdminModal(); return false; } return true;"
+        >Đóng</a>
+      </div>
+      <div id="adminModalBody" class="admin-modal__body"></div>
+    </div>
+  </section>
+
+  <script>
+    window.forceCloseAdminModal = function (event) {
+      if (event && event.target && event.currentTarget && event.target !== event.currentTarget) {
+        return;
+      }
+      var modal = document.getElementById("adminModal");
+      if (!modal) {
+        return;
+      }
+      modal.hidden = true;
+      document.body.classList.remove("admin-modal-open");
+      try {
+        if (window.state) {
+          window.state.currentAdminModalItem = null;
+        }
+      } catch (error) {
+      }
+    };
+    window.hideBrokenAdminModal = function () {
+      var modal = document.getElementById("adminModal");
+      var title = document.getElementById("adminModalTitle");
+      var body = document.getElementById("adminModalBody");
+      if (!modal || modal.hidden) {
+        return;
+      }
+      var isDefaultTitle = title && title.textContent && title.textContent.trim() === "Chi tiết hồ sơ";
+      var isEmptyBody = !body || !body.textContent || body.textContent.trim() === "";
+      if (isDefaultTitle && isEmptyBody) {
+        window.forceCloseAdminModal();
+      }
+    };
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        window.forceCloseAdminModal();
+      }
+    });
+    window.addEventListener("error", function () {
+      window.hideBrokenAdminModal();
+    });
+    window.addEventListener("load", function () {
+      window.setTimeout(window.hideBrokenAdminModal, 250);
+      window.setTimeout(window.hideBrokenAdminModal, 1000);
+    });
+  </script>
+  <script src="/static/app.js?v=20260422-admin-layout-5"></script>
 </body>
 </html>

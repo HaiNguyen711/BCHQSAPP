@@ -423,9 +423,7 @@ function renderField(sectionId, field, values, itemIndex, errors) {
     emptyOption.value = "";
     emptyOption.textContent = "-- Chọn --";
     input.appendChild(emptyOption);
-    const selectOptions = sectionId === "personal_basic" && field.id === "neighborhood"
-      ? NEIGHBORHOOD_OPTIONS
-      : (field.options || []);
+    const selectOptions = field.options || [];
     selectOptions.forEach((option) => {
       const opt = document.createElement("option");
       opt.value = option;
@@ -720,16 +718,21 @@ function isValidDateValue(value) {
 
 function getVisibleSections() {
   return state.schema.sections.filter((section) => {
-    if (section.id !== "siblings") {
-      return true;
+    if (section.id === "siblings") {
+      const totalChildrenRaw = state.values.family_basic?.total_children;
+      const totalChildren = Number.parseInt(totalChildrenRaw, 10);
+      return Number.isNaN(totalChildren) || totalChildren > 1;
     }
 
-    const totalChildrenRaw = state.values.family_basic?.total_children;
-    const totalChildren = Number.parseInt(totalChildrenRaw, 10);
-    return Number.isNaN(totalChildren) || totalChildren > 1;
+    if (section.id === "children") {
+      const childrenCountRaw = state.values.marital_basic?.children_count;
+      const childrenCount = Number.parseInt(childrenCountRaw, 10);
+      return !Number.isNaN(childrenCount) && childrenCount > 0;
+    }
+
+    return true;
   });
 }
-
 async function bootAdminPage() {
   document.getElementById("loginAdminBtn").addEventListener("click", loginAdmin);
   document.getElementById("refreshAdminBtn").addEventListener("click", loadAdminData);
@@ -737,6 +740,10 @@ async function bootAdminPage() {
   document.getElementById("exportBtn").addEventListener("click", exportCsv);
   document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
   document.getElementById("adminSearchCitizenId").addEventListener("input", handleAdminCitizenIdSearch);
+  document.getElementById("adminTableWrap").addEventListener("click", handleAdminTableActions);
+  document.getElementById("adminModalCloseBtn").addEventListener("click", closeAdminModal);
+  document.getElementById("adminModal").addEventListener("click", handleAdminModalClick);
+  document.addEventListener("keydown", handleAdminModalKeydown);
 
   const response = await fetch("/api/admin/session");
   const session = await response.json();
@@ -751,6 +758,7 @@ async function bootAdminPage() {
 function showAdminLogin() {
   document.getElementById("adminLoginCard").hidden = false;
   document.getElementById("adminDashboardCard").hidden = true;
+  closeAdminModal();
 }
 
 function showAdminDashboard() {
@@ -761,7 +769,6 @@ function showAdminDashboard() {
 async function loginAdmin() {
   const token = document.getElementById("adminToken").value.trim();
   const messageEl = document.getElementById("adminLoginMessage");
-
   messageEl.textContent = "Đang đăng nhập...";
   messageEl.className = "form-message";
 
@@ -773,12 +780,12 @@ async function loginAdmin() {
   const result = await response.json();
   if (!response.ok) {
     messageEl.textContent = result.error || "Không thể đăng nhập.";
-    messageEl.classList.add("is-error");
+    messageEl.className = "form-message is-error";
     return;
   }
 
   messageEl.textContent = result.message;
-  messageEl.classList.add("is-success");
+  messageEl.className = "form-message is-success";
   showAdminDashboard();
   await loadAdminData();
 }
@@ -796,12 +803,12 @@ async function logoutAdmin() {
   state.adminItems = [];
   state.adminInterestItems = [];
   state.adminCitizenIdFilter = "";
+  closeAdminModal();
   showAdminLogin();
 }
 
 async function loadAdminData() {
   const messageEl = document.getElementById("adminMessage");
-
   messageEl.textContent = "Đang tải dữ liệu quản trị...";
   messageEl.className = "form-message";
 
@@ -848,23 +855,45 @@ function renderAdminTableWrap() {
   }
 
   if (state.adminCitizenIdFilter) {
-    messageEl.textContent = `Tìm thấy ${items.length}/${state.adminItems.length} phiếu theo CCCD.`;
+    messageEl.textContent = `Tìm thấy ${items.length}/${state.adminItems.length} phiếu theo từ khóa.`;
     messageEl.className = "form-message is-success";
+    return;
   }
+
+  messageEl.textContent = `Đang hiển thị ${items.length} phiếu đã gửi.`;
+  messageEl.className = "form-message";
 }
 
 function renderAdminTrackingWrap() {
-  const wrap = document.getElementById("adminTrackingWrap");
-  wrap.innerHTML = renderAdminTrackingTable(state.adminInterestItems);
+  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingTable(state.adminInterestItems);
 }
 
 function getFilteredAdminItems() {
   if (!state.adminCitizenIdFilter) {
     return state.adminItems;
   }
+  const normalizedFilter = normalizeSearchText(state.adminCitizenIdFilter);
+  return state.adminItems.filter((item) => getAdminSearchBlob(item).includes(normalizedFilter));
+}
 
-  const normalizedFilter = normalizeDigits(state.adminCitizenIdFilter);
-  return state.adminItems.filter((item) => normalizeDigits(item.citizen_id_number || "").includes(normalizedFilter));
+function getAdminSearchBlob(item) {
+  if (!item._searchBlob) {
+    item._searchBlob = normalizeSearchText(collectSearchTokens(item).join(" "));
+  }
+  return item._searchBlob;
+}
+
+function collectSearchTokens(value) {
+  if (value === null || value === undefined) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => collectSearchTokens(entry));
+  }
+  if (typeof value === "object") {
+    return Object.values(value).flatMap((entry) => collectSearchTokens(entry));
+  }
+  return [String(value)];
 }
 
 function renderSummaryCards(summary) {
@@ -905,7 +934,6 @@ function renderSummaryListItems(items) {
   if (!items.length) {
     return "<p>Chưa có dữ liệu.</p>";
   }
-
   return `
     <ul class="summary-list">
       ${items.map((item) => `
@@ -925,33 +953,42 @@ function renderAdminTable(items) {
 
   const rows = items.map((item) => `
     <tr>
-      <td>${item.id}</td>
+      <td class="admin-table__id">${item.id}</td>
       <td><span class="form-chip">${escapeHtml(item.form_label || item.form_code || "-")}</span></td>
       <td>${renderCitizenPrimaryInfo(item)}</td>
       <td>${renderCitizenLocationInfo(item)}</td>
       <td>${renderCitizenFamilyInfo(item)}</td>
       <td>${renderCitizenTimelineInfo(item)}</td>
-      <td>${escapeHtml(formatDateTime(item.created_at))}</td>
-      <td>${renderCitizenPayloadDetails(item)}</td>
+      <td class="admin-table__date">${escapeHtml(formatDateTime(item.created_at))}</td>
+      <td>${renderCitizenSummaryDetails(item)}</td>
+      <td class="admin-table__actions">${renderCitizenActions(item)}</td>
     </tr>
   `).join("");
 
   return `
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Loại phiếu</th>
-          <th>Thông tin công dân</th>
-          <th>Địa bàn</th>
-          <th>Gia đình</th>
-          <th>Quá trình</th>
-          <th>Thời gian tạo</th>
-          <th>Chi tiết</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="admin-record-layout">
+      <div class="admin-record-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Loại phiếu</th>
+              <th>Thông tin công dân</th>
+              <th>Địa bàn</th>
+              <th>Gia đình</th>
+              <th>Quá trình</th>
+              <th>Thời gian tạo</th>
+              <th>Tóm tắt</th>
+              <th>Tác vụ</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="admin-record-cards">
+        ${items.map((item) => renderAdminSubmissionCard(item)).join("")}
+      </div>
+    </div>
   `;
 }
 
@@ -962,29 +999,89 @@ function renderAdminTrackingTable(items) {
 
   const rows = items.map((item) => `
     <tr>
-      <td>${item.id}</td>
+      <td class="admin-table__id">${item.id}</td>
       <td><span class="form-chip form-chip--pending">${escapeHtml(item.form_label || item.form_code || "-")}</span></td>
       <td>${escapeHtml(item.source || "landing")}</td>
       <td>${escapeHtml(item.client_ip || "-")}</td>
       <td class="admin-user-agent">${escapeHtml(item.user_agent || "-")}</td>
-      <td>${escapeHtml(formatDateTime(item.created_at))}</td>
+      <td class="admin-table__date">${escapeHtml(formatDateTime(item.created_at))}</td>
     </tr>
   `).join("");
 
   return `
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Loại phiếu</th>
-          <th>Nguồn</th>
-          <th>IP</th>
-          <th>User agent</th>
-          <th>Thời gian tạo</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
+    <div class="admin-record-layout">
+      <div class="admin-record-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Loại phiếu</th>
+              <th>Nguồn</th>
+              <th>IP</th>
+              <th>User agent</th>
+              <th>Thời gian tạo</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="admin-record-cards admin-record-cards--tracking">
+        ${items.map((item) => renderAdminTrackingCard(item)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminSubmissionCard(item) {
+  return `
+    <article class="admin-record-card">
+      <div class="admin-record-card__head">
+        <div class="admin-record-card__meta">
+          <span class="admin-record-card__id">#${item.id}</span>
+          <span class="form-chip">${escapeHtml(item.form_label || item.form_code || "-")}</span>
+        </div>
+        <time>${escapeHtml(formatDateTime(item.created_at))}</time>
+      </div>
+      <h4>${escapeHtml(item.full_name || "Công dân chưa rõ tên")}</h4>
+      <div class="admin-record-card__sections">
+        ${renderCompactBlock("Công dân", renderCitizenPrimaryInfo(item))}
+        ${renderCompactBlock("Địa bàn", renderCitizenLocationInfo(item))}
+        ${renderCompactBlock("Gia đình", renderCitizenFamilyInfo(item))}
+        ${renderCompactBlock("Quá trình", renderCitizenTimelineInfo(item))}
+        ${renderCompactBlock("Tóm tắt", renderCitizenSummaryDetails(item))}
+      </div>
+      <div class="admin-record-card__footer">
+        ${renderCitizenActions(item)}
+      </div>
+    </article>
+  `;
+}
+
+function renderAdminTrackingCard(item) {
+  return `
+    <article class="admin-record-card admin-record-card--tracking">
+      <div class="admin-record-card__head">
+        <div class="admin-record-card__meta">
+          <span class="admin-record-card__id">#${item.id}</span>
+          <span class="form-chip form-chip--pending">${escapeHtml(item.form_label || item.form_code || "-")}</span>
+        </div>
+        <time>${escapeHtml(formatDateTime(item.created_at))}</time>
+      </div>
+      <div class="admin-record-card__sections">
+        ${renderCompactBlock("Nguồn", `<p>${escapeHtml(item.source || "landing")}</p>`)}
+        ${renderCompactBlock("IP", `<p>${escapeHtml(item.client_ip || "-")}</p>`)}
+        ${renderCompactBlock("User agent", `<p class="admin-user-agent">${escapeHtml(item.user_agent || "-")}</p>`)}
+      </div>
+    </article>
+  `;
+}
+
+function renderCompactBlock(title, content) {
+  return `
+    <section class="admin-record-card__block">
+      <h5>${escapeHtml(title)}</h5>
+      ${content}
+    </section>
   `;
 }
 
@@ -992,12 +1089,12 @@ function renderCitizenPrimaryInfo(item) {
   const personal = item.payload?.personal_basic || {};
   const pieces = [
     { label: "Họ tên", value: item.full_name },
+    { label: "Khai sinh", value: personal.birth_name },
     { label: "Giới tính", value: personal.gender },
     { label: "Ngày sinh", value: personal.date_of_birth },
     { label: "CCCD", value: item.citizen_id_number },
     { label: "Điện thoại", value: item.phone },
   ].filter((piece) => piece.value);
-
   return renderKeyValueList(pieces);
 }
 
@@ -1008,23 +1105,23 @@ function renderCitizenLocationInfo(item) {
     { label: "Phường", value: personal.ward },
     { label: "Tỉnh/Thành", value: personal.province },
     { label: "Quê quán", value: item.hometown || personal.hometown },
+    { label: "Thường trú gia đình", value: personal.family_permanent_residence },
     { label: "Nơi ở hiện tại", value: item.current_residence },
   ].filter((piece) => piece.value);
-
   return renderKeyValueList(pieces);
 }
 
 function renderCitizenFamilyInfo(item) {
   const family = item.payload?.family_basic || {};
+  const marital = item.payload?.marital_basic || {};
   const pieces = [
     { label: "Cha", value: family.father_name },
     { label: "Mẹ", value: family.mother_name },
-    { label: "Nhà có", value: family.total_children ? `${family.total_children} con` : "" },
+    { label: "Vợ/chồng", value: marital.spouse_name },
+    { label: "Nhà có", value: family.total_children ? `${family.total_children} người con` : "" },
     { label: "Con thứ", value: family.birth_order },
-    { label: "Con trai", value: family.sons_count },
-    { label: "Con gái", value: family.daughters_count },
+    { label: "Con của bản thân", value: marital.children_count },
   ].filter((piece) => piece.value);
-
   return renderKeyValueList(pieces);
 }
 
@@ -1032,18 +1129,17 @@ function renderCitizenTimelineInfo(item) {
   const personalHistory = item.payload?.personal_history || [];
   const fatherHistory = item.payload?.father_history || [];
   const motherHistory = item.payload?.mother_history || [];
-
   const pieces = [
     { label: "Bản thân", value: `${personalHistory.length} giai đoạn` },
     { label: "Cha", value: `${fatherHistory.length} giai đoạn` },
     { label: "Mẹ", value: `${motherHistory.length} giai đoạn` },
     { label: "Anh chị em", value: `${(item.payload?.siblings || []).length} người` },
+    { label: "Con", value: `${(item.payload?.children || []).length} người` },
   ];
-
   return renderKeyValueList(pieces);
 }
 
-function renderCitizenPayloadDetails(item) {
+function renderCitizenSummaryDetails(item) {
   const personal = item.payload?.personal_basic || {};
   const summaryPieces = [
     { label: "Dân tộc", value: personal.ethnicity },
@@ -1051,6 +1147,7 @@ function renderCitizenPayloadDetails(item) {
     { label: "Quốc tịch", value: personal.nationality },
     { label: "Nghề nghiệp", value: personal.occupation },
     { label: "Nơi làm việc", value: personal.workplace },
+    { label: "Trình độ", value: personal.training_level },
   ].filter((piece) => piece.value);
 
   return `
@@ -1064,11 +1161,546 @@ function renderCitizenPayloadDetails(item) {
   `;
 }
 
+function renderCitizenActions(item) {
+  return `
+    <div class="admin-action-stack">
+      <button type="button" class="ghost-btn admin-row-btn" data-admin-action="view" data-submission-id="${item.id}">
+        Xem thông tin
+      </button>
+      <button type="button" class="primary-btn admin-row-btn" data-admin-action="profile" data-submission-id="${item.id}">
+        Xuất hồ sơ
+      </button>
+    </div>
+  `;
+}
+
+function handleAdminTableActions(event) {
+  const button = event.target.closest("[data-admin-action]");
+  if (!button) {
+    return;
+  }
+  const submissionId = Number.parseInt(button.dataset.submissionId || "", 10);
+  const item = state.adminItems.find((entry) => entry.id === submissionId);
+  if (!item) {
+    openAdminModal({
+      eyebrow: "Không tìm thấy dữ liệu",
+      title: "Không mở được hồ sơ",
+      subtitle: `Không tìm thấy phiếu #${Number.isNaN(submissionId) ? "-" : submissionId} trong dữ liệu hiện tại.`,
+      bodyHtml: renderModalErrorState("Hãy bấm “Làm mới” rồi thử lại một lần nữa."),
+      wide: false,
+      paper: false,
+    });
+    return;
+  }
+  try {
+    if (button.dataset.adminAction === "view") {
+      openSubmissionDetailModal(item);
+      return;
+    }
+    if (button.dataset.adminAction === "profile") {
+      openSubmissionProfileModal(item);
+    }
+  } catch (error) {
+    console.error("admin-modal-render-error", error);
+    openAdminModal({
+      eyebrow: "Lỗi hiển thị",
+      title: item.full_name || "Không thể mở hồ sơ",
+      subtitle: "Đã có lỗi khi dựng popup. Mình hiển thị nội dung lỗi để tiếp tục xử lý nhanh.",
+      bodyHtml: renderModalErrorState(error?.stack || error?.message || "Unknown error"),
+      wide: true,
+      paper: false,
+      item,
+    });
+  }
+}
+
+function openSubmissionDetailModal(item) {
+  const bodyHtml = `
+    <div class="admin-modal-tabs">
+      <button type="button" class="admin-modal-tab is-active" data-admin-tab="personal">Bản thân</button>
+      <button type="button" class="admin-modal-tab" data-admin-tab="family">Gia đình</button>
+    </div>
+    <div class="admin-modal-panel is-active" data-admin-panel="personal">
+      ${renderDetailPanelPersonal(item)}
+    </div>
+    <div class="admin-modal-panel" data-admin-panel="family">
+      ${renderDetailPanelFamily(item)}
+    </div>
+  `;
+  openAdminModal({
+    eyebrow: item.form_label || "Hồ sơ công dân",
+    title: item.full_name || "Thông tin công dân",
+    subtitle: `CCCD ${escapeHtml(item.citizen_id_number || "-")} · Tạo lúc ${escapeHtml(formatDateTime(item.created_at))}`,
+    bodyHtml,
+    wide: true,
+    paper: false,
+  });
+}
+
+function openSubmissionProfileModal(item) {
+  const bodyHtml = `
+    <div class="profile-preview-shell">
+      <article class="profile-sheet" id="adminProfileSheet">
+        ${buildProfileDocumentMarkup(item)}
+      </article>
+    </div>
+  `;
+  const actionsHtml = `
+    <button type="button" class="ghost-btn" data-modal-action="print-profile">In hồ sơ</button>
+    <button type="button" class="ghost-btn" data-modal-action="export-pdf">Xuất PDF</button>
+    <button type="button" class="primary-btn" data-modal-action="export-word">Xuất Word</button>
+    <div class="admin-modal__hint">PDF sẽ dùng bản in chuẩn, có thể lưu bằng “Save as PDF”.</div>
+  `;
+  openAdminModal({
+    eyebrow: "Biểu mẫu lý lịch",
+    title: `Hồ sơ NVQS - ${item.full_name || "Công dân"}`,
+    subtitle: "Xem trước hồ sơ để in hoặc xuất Word theo biểu mẫu quản trị.",
+    bodyHtml,
+    actionsHtml,
+    wide: true,
+    paper: true,
+    item,
+  });
+}
+
+function openAdminModal({ eyebrow = "", title = "", subtitle = "", bodyHtml = "", actionsHtml = "", wide = false, paper = false, item = null }) {
+  const modal = document.getElementById("adminModal");
+  const dialog = document.getElementById("adminModalDialog");
+  document.getElementById("adminModalEyebrow").textContent = eyebrow || "";
+  document.getElementById("adminModalTitle").textContent = title || "Chi tiết hồ sơ";
+  document.getElementById("adminModalSubtitle").textContent = subtitle || "";
+  document.getElementById("adminModalBody").innerHTML = bodyHtml || renderModalErrorState("Popup đã mở nhưng chưa nhận được nội dung hiển thị.");
+  document.getElementById("adminModalActions").innerHTML = actionsHtml || "";
+  dialog.classList.toggle("admin-modal__dialog--wide", wide);
+  dialog.classList.toggle("admin-modal__dialog--paper", paper);
+  modal.hidden = false;
+  document.body.classList.add("admin-modal-open");
+  state.currentAdminModalItem = item;
+}
+
+function closeAdminModal() {
+  const modal = document.getElementById("adminModal");
+  if (!modal) {
+    return;
+  }
+  modal.hidden = true;
+  document.body.classList.remove("admin-modal-open");
+  state.currentAdminModalItem = null;
+}
+
+function handleAdminModalClick(event) {
+  const overlay = event.target.closest("#adminModal");
+  if (event.target === overlay) {
+    closeAdminModal();
+    return;
+  }
+  const tabButton = event.target.closest("[data-admin-tab]");
+  if (tabButton) {
+    setAdminModalTab(tabButton.dataset.adminTab || "");
+    return;
+  }
+  const actionButton = event.target.closest("[data-modal-action]");
+  if (!actionButton || !state.currentAdminModalItem) {
+    return;
+  }
+  if (actionButton.dataset.modalAction === "export-word") {
+    window.location.href = `/api/admin/submissions/${state.currentAdminModalItem.id}/profile.docx`;
+    return;
+  }
+  if (actionButton.dataset.modalAction === "export-pdf") {
+    printProfileDocument(state.currentAdminModalItem, "pdf");
+    return;
+  }
+  if (actionButton.dataset.modalAction === "print-profile") {
+    printProfileDocument(state.currentAdminModalItem, "print");
+  }
+}
+
+function handleAdminModalKeydown(event) {
+  if (event.key === "Escape") {
+    closeAdminModal();
+  }
+}
+
+function setAdminModalTab(tabName) {
+  document.querySelectorAll(".admin-modal-tab").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.adminTab === tabName);
+  });
+  document.querySelectorAll(".admin-modal-panel").forEach((panel) => {
+    panel.classList.toggle("is-active", panel.dataset.adminPanel === tabName);
+  });
+}
+
+function renderDetailPanelPersonal(item) {
+  const personal = item.payload?.personal_basic || {};
+  return `
+    <div class="detail-grid">
+      ${renderDetailCard("Định danh", renderDefinitionGrid([
+        ["Họ tên", item.full_name],
+        ["Họ tên khai sinh", personal.birth_name],
+        ["Ngày sinh", personal.date_of_birth],
+        ["Giới tính", personal.gender],
+        ["CCCD", item.citizen_id_number],
+        ["Điện thoại", item.phone],
+        ["Nơi đăng ký khai sinh", personal.birth_registration_place],
+        ["Quê quán", personal.hometown],
+      ]))}
+      ${renderDetailCard("Nơi cư trú", renderDefinitionGrid([
+        ["Địa chỉ", personal.street_address],
+        ["Khu phố", personal.neighborhood],
+        ["Phường", personal.ward],
+        ["Tỉnh/Thành phố", personal.province],
+        ["Thường trú gia đình", personal.family_permanent_residence],
+        ["Nơi ở hiện tại", personal.current_residence],
+      ]))}
+      ${renderDetailCard("Học tập và nghề nghiệp", renderDefinitionGrid([
+        ["Thành phần gia đình", personal.family_background],
+        ["Thành phần bản thân", personal.personal_background],
+        ["Trình độ văn hóa", personal.education_level],
+        ["Năm tốt nghiệp", personal.graduation_year],
+        ["Trình độ đào tạo", personal.training_level],
+        ["Chuyên ngành", personal.major],
+        ["Ngoại ngữ", personal.foreign_language],
+        ["Nghề nghiệp", personal.occupation],
+        ["Nơi làm việc", personal.workplace],
+        ["Lương ngạch", personal.salary_grade],
+        ["Bậc lương", personal.salary_step],
+      ]))}
+      ${renderDetailCard("Đoàn thể và ghi chú", renderDefinitionGrid([
+        ["Ngày vào Đoàn", personal.youth_union_join_date],
+        ["Ngày vào Đảng", personal.party_join_date],
+        ["Ngày chính thức vào Đảng", personal.party_official_date],
+        ["Dân tộc", personal.ethnicity],
+        ["Tôn giáo", personal.religion],
+        ["Quốc tịch", personal.nationality],
+      ]) + renderLongTextList([
+        ["Khen thưởng", personal.reward_record],
+        ["Kỷ luật", personal.discipline_record],
+      ]))}
+      ${renderDetailCard("Lý lịch bản thân", renderTimelineList(item.payload?.personal_history || [], "giai đoạn"))}
+    </div>
+  `;
+}
+
+function renderDetailPanelFamily(item) {
+  const family = item.payload?.family_basic || {};
+  const marital = item.payload?.marital_basic || {};
+  return `
+    <div class="detail-grid">
+      ${renderDetailCard("Cha", renderDefinitionGrid([
+        ["Họ tên", family.father_name],
+        ["Ngày sinh", family.father_date_of_birth],
+        ["Điện thoại", family.father_phone],
+        ["Nghề nghiệp", family.father_occupation],
+        ["Tình trạng", family.father_status],
+        ["Nơi ở hiện tại", family.father_current_residence],
+      ]) + renderTimelineList(item.payload?.father_history || [], "giai đoạn"))}
+      ${renderDetailCard("Mẹ", renderDefinitionGrid([
+        ["Họ tên", family.mother_name],
+        ["Ngày sinh", family.mother_date_of_birth],
+        ["Điện thoại", family.mother_phone],
+        ["Nghề nghiệp", family.mother_occupation],
+        ["Tình trạng", family.mother_status],
+        ["Nơi ở hiện tại", family.mother_current_residence],
+      ]) + renderTimelineList(item.payload?.mother_history || [], "giai đoạn"))}
+      ${renderDetailCard("Hôn nhân", renderDefinitionGrid([
+        ["Tình trạng hôn nhân", marital.marital_status],
+        ["Vợ/chồng", marital.spouse_name],
+        ["Ngày sinh vợ/chồng", marital.spouse_date_of_birth],
+        ["Nghề nghiệp vợ/chồng", marital.spouse_occupation],
+        ["Nơi ở hiện tại", marital.spouse_current_residence],
+        ["Số con", marital.children_count],
+      ]) + renderLongTextList([
+        ["Ghi chú vợ/chồng", marital.spouse_notes],
+        ["Ghi chú gia đình", family.family_notes],
+      ]))}
+      ${renderDetailCard("Cấu trúc gia đình", renderDefinitionGrid([
+        ["Số người con của cha mẹ", family.total_children],
+        ["Bản thân là con thứ", family.birth_order],
+        ["Số con trai", family.sons_count],
+        ["Số con gái", family.daughters_count],
+      ]))}
+      ${renderDetailCard("Anh chị em", renderPeopleList(item.payload?.siblings || [], "Chưa khai anh chị em."))}
+      ${renderDetailCard("Con của công dân", renderPeopleList(item.payload?.children || [], "Chưa khai thông tin con."))}
+    </div>
+  `;
+}
+
+function buildProfileDocumentMarkup(item) {
+  const personal = item.payload?.personal_basic || {};
+  const family = item.payload?.family_basic || {};
+  const marital = item.payload?.marital_basic || {};
+  const siblings = item.payload?.siblings || [];
+  const children = item.payload?.children || [];
+  return `
+    <header class="profile-sheet__header">
+      <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+      <p>Độc lập - Tự do - Hạnh phúc</p>
+      <h3>LÝ LỊCH NGHĨA VỤ QUÂN SỰ</h3>
+    </header>
+    <section class="profile-sheet__section">
+      <h4>I. SƠ YẾU LÝ LỊCH</h4>
+      ${renderProfileLine("Họ, chữ đệm và tên thường dùng", upperCase(item.full_name))}
+      ${renderProfileLine("Họ, chữ đệm và tên khai sinh", personal.birth_name || item.full_name)}
+      ${renderProfileDoubleLine("Sinh ngày", personal.date_of_birth, "Giới tính", personal.gender)}
+      ${renderProfileLine("Số thẻ Căn cước công dân", item.citizen_id_number)}
+      ${renderProfileLine("Nơi đăng ký khai sinh", personal.birth_registration_place)}
+      ${renderProfileLine("Quê quán", personal.hometown)}
+      ${renderProfileTripleLine("Dân tộc", personal.ethnicity, "Tôn giáo", personal.religion, "Quốc tịch", personal.nationality)}
+      ${renderProfileLine("Nơi thường trú của gia đình", personal.family_permanent_residence)}
+      ${renderProfileLine("Nơi ở hiện tại của bản thân", personal.current_residence)}
+      ${renderProfileDoubleLine("Thành phần gia đình", personal.family_background, "Bản thân", personal.personal_background)}
+      ${renderProfileDoubleLine("Trình độ văn hóa", personal.education_level, "Năm tốt nghiệp", personal.graduation_year)}
+      ${renderProfileDoubleLine("Ngành, nghề đào tạo", personal.major, "Trình độ đào tạo", personal.training_level)}
+      ${renderProfileLine("Trình độ ngoại ngữ", personal.foreign_language)}
+      ${renderProfileDoubleLine("Ngày vào Đảng CSVN", personal.party_join_date, "Chính thức", personal.party_official_date)}
+      ${renderProfileLine("Ngày vào Đoàn TNCS Hồ Chí Minh", personal.youth_union_join_date)}
+      ${renderProfileDoubleLine("Khen thưởng", personal.reward_record, "Kỷ luật", personal.discipline_record)}
+      ${renderProfileTripleLine("Nghề nghiệp", personal.occupation, "Lương ngạch", personal.salary_grade, "Bậc", personal.salary_step)}
+      ${renderProfileLine("Nơi làm việc (học tập)", personal.workplace)}
+      ${renderProfileDoubleLine("Họ tên cha", family.father_name, "Tình trạng", family.father_status)}
+      ${renderProfileDoubleLine("Sinh năm cha", extractYear(family.father_date_of_birth), "Nghề nghiệp cha", family.father_occupation)}
+      ${renderProfileDoubleLine("Họ tên mẹ", family.mother_name, "Tình trạng", family.mother_status)}
+      ${renderProfileDoubleLine("Sinh năm mẹ", extractYear(family.mother_date_of_birth), "Nghề nghiệp mẹ", family.mother_occupation)}
+      ${renderProfileDoubleLine("Họ tên vợ/chồng", marital.spouse_name, "Sinh năm", extractYear(marital.spouse_date_of_birth))}
+      ${renderProfileDoubleLine("Nghề nghiệp vợ/chồng", marital.spouse_occupation, "Bản thân đã có", marital.children_count ? `${marital.children_count} con` : "")}
+      ${renderProfileLine("Cha mẹ có", family.total_children ? `${family.total_children} người con, ${displayValue(family.sons_count)} trai, ${displayValue(family.daughters_count)} gái. Bản thân là con thứ ${displayValue(family.birth_order)}.` : "")}
+    </section>
+    <section class="profile-sheet__section">
+      <h4>II. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ CỦA GIA ĐÌNH</h4>
+      ${renderNarrativeParagraphs(buildFamilyNarratives(item))}
+    </section>
+    <section class="profile-sheet__section">
+      <h4>III. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ, QUÁ TRÌNH CÔNG TÁC CỦA BẢN THÂN</h4>
+      <p class="profile-sheet__hint">(Nêu thời gian, kết quả học tập, rèn luyện phấn đấu từ nhỏ đến thời điểm nhập ngũ)</p>
+      ${renderNarrativeParagraphs(buildSelfNarratives(item))}
+    </section>
+    <footer class="profile-sheet__footer">
+      <strong>CHỮ KÝ CỦA CÔNG DÂN</strong>
+      <span>(Ký, ghi rõ họ tên)</span>
+      <strong>${escapeHtml(upperCase(item.full_name))}</strong>
+    </footer>
+  `;
+}
+
+function buildFamilyNarratives(item) {
+  const family = item.payload?.family_basic || {};
+  const marital = item.payload?.marital_basic || {};
+  const siblings = item.payload?.siblings || [];
+  const children = item.payload?.children || [];
+  const narratives = [
+    `Cha: ${displayValue(family.father_name)}, sinh năm ${displayValue(extractYear(family.father_date_of_birth))}, nghề nghiệp ${displayValue(family.father_occupation)}, tình trạng ${displayValue(family.father_status)}, nơi ở hiện tại ${displayValue(family.father_current_residence)}.`,
+    `Mẹ: ${displayValue(family.mother_name)}, sinh năm ${displayValue(extractYear(family.mother_date_of_birth))}, nghề nghiệp ${displayValue(family.mother_occupation)}, tình trạng ${displayValue(family.mother_status)}, nơi ở hiện tại ${displayValue(family.mother_current_residence)}.`,
+  ];
+  if ((item.payload?.father_history || []).length) {
+    narratives.push(`Quá trình của cha: ${joinHistory(item.payload?.father_history || [])}.`);
+  }
+  if ((item.payload?.mother_history || []).length) {
+    narratives.push(`Quá trình của mẹ: ${joinHistory(item.payload?.mother_history || [])}.`);
+  }
+  if (marital.spouse_name) {
+    narratives.push(`Vợ/chồng: ${displayValue(marital.spouse_name)}, sinh năm ${displayValue(extractYear(marital.spouse_date_of_birth))}, nghề nghiệp ${displayValue(marital.spouse_occupation)}, nơi ở hiện tại ${displayValue(marital.spouse_current_residence)}. ${displayValue(marital.spouse_notes)}`);
+  }
+  siblings.forEach((sibling, index) => {
+    narratives.push(`Anh/chị/em ${index + 1}: ${displayValue(sibling.full_name)}, ${displayValue(sibling.relation)}, sinh năm ${displayValue(extractYear(sibling.date_of_birth))}, nghề nghiệp ${displayValue(sibling.occupation)}, nơi học tập/làm việc ${displayValue(sibling.workplace)}, nơi ở hiện tại ${displayValue(sibling.current_residence)}. ${displayValue(sibling.notes)}`);
+  });
+  children.forEach((child, index) => {
+    narratives.push(`Con ${index + 1}: ${displayValue(child.full_name)}, sinh năm ${displayValue(extractYear(child.date_of_birth))}, học tập/nghề nghiệp ${displayValue(child.occupation)}, nơi ở hiện tại ${displayValue(child.current_residence)}. ${displayValue(child.notes)}`);
+  });
+  if (family.family_notes) {
+    narratives.push(`Ghi chú thêm về tình hình gia đình: ${displayValue(family.family_notes)}.`);
+  }
+  return narratives;
+}
+
+function buildSelfNarratives(item) {
+  const personal = item.payload?.personal_basic || {};
+  const personalHistory = item.payload?.personal_history || [];
+  const narratives = personalHistory.length
+    ? personalHistory.map((entry, index) => `${index + 1}. ${displayValue(entry.stage_name)}: ${displayValue(entry.from_year)} - ${displayValue(entry.to_year)}. ${displayValue(entry.summary)}.`)
+    : ["Chưa có thông tin lý lịch bản thân."];
+  if (personal.reward_record) {
+    narratives.push(`Khen thưởng: ${displayValue(personal.reward_record)}.`);
+  }
+  if (personal.discipline_record) {
+    narratives.push(`Kỷ luật: ${displayValue(personal.discipline_record)}.`);
+  }
+  return narratives;
+}
+
+function printProfileDocument(item, mode = "print") {
+  const printWindow = window.open("", "_blank", "width=1100,height=900");
+  if (!printWindow) {
+    return;
+  }
+  const content = buildProfileDocumentMarkup(item);
+  const helperText = mode === "pdf"
+    ? '<div class="profile-export-hint">Trong hộp thoại in, chọn đích “Save as PDF” để lưu thành file PDF.</div>'
+    : "";
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="vi">
+      <head>
+        <meta charset="UTF-8">
+        <title>Hồ sơ NVQS</title>
+        <style>
+          body { margin: 0; padding: 24px; background: #f7f1ed; font-family: "Times New Roman", serif; color: #18110d; }
+          .profile-sheet { max-width: 210mm; margin: 0 auto; background: #fffefc; padding: 24mm 18mm; box-shadow: 0 24px 60px rgba(65, 30, 18, 0.12); }
+          .profile-sheet__header, .profile-sheet__footer { text-align: center; }
+          .profile-sheet__header p { margin: 0; font-weight: 700; }
+          .profile-sheet__header h3 { margin: 18px 0 0; font-size: 28px; }
+          .profile-sheet__section { margin-top: 18px; }
+          .profile-sheet__section h4 { margin: 0 0 10px; font-size: 20px; }
+          .profile-line { display: grid; grid-template-columns: 220px 1fr; gap: 10px; padding: 4px 0; border-bottom: 1px dotted #b8a79d; }
+          .profile-line--triple { grid-template-columns: 140px 1fr 120px 1fr 90px 1fr; }
+          .profile-line--double { grid-template-columns: 180px 1fr 170px 1fr; }
+          .profile-line span:first-child, .profile-line span:nth-child(3), .profile-line span:nth-child(5) { font-weight: 700; }
+          .profile-sheet p { line-height: 1.55; margin: 0 0 10px; }
+          .profile-sheet__hint { font-style: italic; }
+          .profile-sheet__footer { margin-top: 34px; display: grid; gap: 8px; }
+          .profile-export-hint { max-width: 210mm; margin: 0 auto 16px; padding: 14px 16px; border-radius: 14px; background: #fff3d9; color: #5f3c00; font-family: Georgia, serif; }
+          @media print {
+            body { background: #fff; padding: 0; }
+            .profile-export-hint { display: none; }
+            .profile-sheet { box-shadow: none; max-width: none; padding: 12mm 14mm; }
+          }
+        </style>
+      </head>
+      <body>
+        ${helperText}
+        <article class="profile-sheet">${content}</article>
+        <script>window.onload = () => { window.print(); };</script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+function renderDetailCard(title, content) {
+  return `
+    <section class="detail-card">
+      <div class="detail-card__header">
+        <h3>${escapeHtml(title)}</h3>
+      </div>
+      <div class="detail-card__body">${content}</div>
+    </section>
+  `;
+}
+
+function renderModalErrorState(message) {
+  return `
+    <div class="admin-modal-error">
+      <strong>Chưa hiển thị được dữ liệu hồ sơ.</strong>
+      <p>${escapeHtml(message)}</p>
+    </div>
+  `;
+}
+
+function renderDefinitionGrid(items) {
+  const visibleItems = items.filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== "");
+  if (!visibleItems.length) {
+    return "<p class=\"admin-empty\">Chưa có dữ liệu.</p>";
+  }
+  return `
+    <dl class="detail-definition-grid">
+      ${visibleItems.map(([label, value]) => `
+        <div>
+          <dt>${escapeHtml(label)}</dt>
+          <dd>${escapeHtml(value)}</dd>
+        </div>
+      `).join("")}
+    </dl>
+  `;
+}
+
+function renderLongTextList(items) {
+  const visibleItems = items.filter(([, value]) => value);
+  if (!visibleItems.length) {
+    return "";
+  }
+  return `
+    <div class="detail-longtext-list">
+      ${visibleItems.map(([label, value]) => `
+        <article>
+          <strong>${escapeHtml(label)}</strong>
+          <p>${escapeHtml(value)}</p>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderTimelineList(items, unitLabel) {
+  if (!items.length) {
+    return `<p class="admin-empty">Chưa có ${escapeHtml(unitLabel)}.</p>`;
+  }
+  return `
+    <ol class="detail-timeline">
+      ${items.map((item) => `
+        <li>
+          <strong>${escapeHtml(item.stage_name || `${item.from_year} - ${item.to_year}`)}</strong>
+          <span>${escapeHtml(`${item.from_year || "-"} - ${item.to_year || "-"}`)}</span>
+          <p>${escapeHtml(item.summary || "")}</p>
+        </li>
+      `).join("")}
+    </ol>
+  `;
+}
+
+function renderPeopleList(items, emptyText) {
+  if (!items.length) {
+    return `<p class="admin-empty">${escapeHtml(emptyText)}</p>`;
+  }
+  return `
+    <div class="people-card-list">
+      ${items.map((item, index) => `
+        <article class="people-card">
+          <h4>${escapeHtml(item.full_name || `Mục ${index + 1}`)}</h4>
+          ${renderDefinitionGrid([
+            ["Quan hệ", item.relation],
+            ["Ngày sinh", item.date_of_birth],
+            ["Nghề nghiệp", item.occupation],
+            ["Nơi học tập/làm việc", item.workplace],
+            ["Nơi ở hiện tại", item.current_residence],
+          ])}
+          ${renderLongTextList([["Ghi chú", item.notes]])}
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderNarrativeParagraphs(lines) {
+  return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
+}
+
+function renderProfileLine(label, value) {
+  return `<div class="profile-line"><span>${escapeHtml(label)}</span><span>${escapeHtml(displayValue(value))}</span></div>`;
+}
+
+function renderProfileDoubleLine(labelA, valueA, labelB, valueB) {
+  return `
+    <div class="profile-line profile-line--double">
+      <span>${escapeHtml(labelA)}</span><span>${escapeHtml(displayValue(valueA))}</span>
+      <span>${escapeHtml(labelB)}</span><span>${escapeHtml(displayValue(valueB))}</span>
+    </div>
+  `;
+}
+
+function renderProfileTripleLine(labelA, valueA, labelB, valueB, labelC, valueC) {
+  return `
+    <div class="profile-line profile-line--triple">
+      <span>${escapeHtml(labelA)}</span><span>${escapeHtml(displayValue(valueA))}</span>
+      <span>${escapeHtml(labelB)}</span><span>${escapeHtml(displayValue(valueB))}</span>
+      <span>${escapeHtml(labelC)}</span><span>${escapeHtml(displayValue(valueC))}</span>
+    </div>
+  `;
+}
+
 function renderKeyValueList(items) {
   if (!items.length) {
     return "<span class=\"admin-empty\">-</span>";
   }
-
   return `
     <dl class="admin-kv-list">
       ${items.map((item) => `
@@ -1086,7 +1718,6 @@ function formatDateTime(value) {
   if (Number.isNaN(date.getTime())) {
     return value || "";
   }
-
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
@@ -1097,6 +1728,46 @@ function formatDateTime(value) {
 
 function normalizeDigits(value) {
   return String(value).replace(/\D/g, "");
+}
+
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function displayValue(value) {
+  const text = String(value || "").trim();
+  return text || "................................";
+}
+
+function upperCase(value) {
+  return String(value || "").trim().toUpperCase();
+}
+
+function extractYear(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+  if (raw.includes("/")) {
+    return raw.split("/").pop();
+  }
+  if (raw.includes("-")) {
+    const parts = raw.split("-");
+    if (parts[0].length === 4) {
+      return parts[0];
+    }
+    return parts.pop();
+  }
+  return raw;
+}
+
+function joinHistory(items) {
+  return items.map((item) => `${displayValue(item.from_year)}-${displayValue(item.to_year)}: ${displayValue(item.summary)}`).join("; ");
 }
 
 function exportCsv() {
