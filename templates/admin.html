@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản trị BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260401-admin-6">
+  <link rel="stylesheet" href="/static/styles.css?v=20260421-admin-tracking-1">
 </head>
 <body data-page="admin">
   <main class="shell shell--admin shell--landing">
@@ -37,7 +37,7 @@
         <div class="hero__eyebrow">Theo dõi và quản trị dữ liệu tập trung</div>
         <h1>Dashboard quản trị BCHQS</h1>
         <p class="hero__intro">
-          Đăng nhập admin để theo dõi phiếu gửi về, rà soát thông tin công dân và xuất báo cáo nhanh phục vụ công tác quản lý.
+          Đăng nhập admin để theo dõi phiếu gửi về, rà soát thông tin công dân và xem thêm tracking các phiếu đang phát triển.
         </p>
       </div>
     </section>
@@ -60,7 +60,7 @@
       <div class="card__header card__header--sheet">
         <div>
           <h2>Dashboard tổng hợp</h2>
-          <p>Theo dõi nhanh số lượng phiếu, phân bố địa bàn và tình hình dữ liệu gửi về.</p>
+          <p>Theo dõi nhanh số lượng phiếu, phân bố địa bàn, loại phiếu được chọn và tình hình dữ liệu gửi về.</p>
         </div>
         <div class="card__actions">
           <button id="refreshAdminBtn" type="button" class="ghost-btn">Làm mới</button>
@@ -78,10 +78,25 @@
       </div>
 
       <p id="adminMessage" class="form-message" aria-live="polite"></p>
-      <div id="adminTableWrap" class="table-wrap"></div>
+
+      <section class="admin-section-block">
+        <div class="admin-section-block__header">
+          <h3>Phiếu đã gửi</h3>
+          <p>Danh sách người dân đã hoàn tất kê khai phiếu 1 hoặc phiếu 2.</p>
+        </div>
+        <div id="adminTableWrap" class="table-wrap"></div>
+      </section>
+
+      <section class="admin-section-block">
+        <div class="admin-section-block__header">
+          <h3>Tracking phiếu đang phát triển</h3>
+          <p>Ghi nhận người dùng đã bấm chọn phiếu 3, 4 hoặc 5 để BCHQS theo dõi nhu cầu thực tế.</p>
+        </div>
+        <div id="adminTrackingWrap" class="table-wrap"></div>
+      </section>
     </section>
   </main>
 
-  <script src="/static/app.js?v=20260401-admin-6"></script>
+  <script src="/static/app.js?v=20260421-admin-tracking-1"></script>
 </body>
 </html>

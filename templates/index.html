@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phiếu thu thập thông tin BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260401-14">
+  <title>Mục thu thập thông tin BCHQS</title>
+  <link rel="stylesheet" href="/static/styles.css?v=20260421-form-choices-3">
 </head>
 <body data-page="form">
   <main class="shell shell--landing">
@@ -34,25 +34,28 @@
       </div>
 
       <div class="hero__copy">
-        <div class="hero__eyebrow">Biểu mẫu trực tuyến phục vụ tiếp nhận hồ sơ</div>
         <h1>{{ ORG_NAME }}</h1>
-        <p class="hero__intro">
-          Khai báo trực tuyến để BCHQS tiếp nhận và cập nhật hồ sơ nhanh hơn, đồng bộ hơn.
-        </p>
-        <div class="hero__meta">
-          <div><strong>Địa chỉ</strong><span>{{ ORG_ADDRESS }}</span></div>
-          <div><strong>Điện thoại</strong><span>{{ ORG_PHONE }}</span></div>
-          <div><strong>Email</strong><span>{{ ORG_EMAIL }}</span></div>
-          <div><strong>Facebook</strong><span>{{ ORG_FACEBOOK }}</span></div>
-        </div>
+        <p class="hero__intro">Chọn đúng loại mục trước khi kê khai. Mục 1 và 2 đã sẵn sàng sử dụng, mục 3, 4, 5 đang trong giai đoạn phát triển.</p>
       </div>
     </section>
 
     <section class="card card--sheet">
       <div class="card__header card__header--sheet">
         <div>
-          <h2>Phiếu khai thông tin</h2>
-          <p>Điền đủ các mục bắt buộc trước khi chuyển bước. Riêng ngày vào Đảng và ngày vào Đoàn có thể để trống nếu chưa có.</p>
+          <h2>Chọn loại mục kê khai</h2>
+          <p>Người dân chọn đúng nhóm hồ sơ cần thực hiện. Hệ thống sẽ ghi nhận lựa chọn để BCHQS theo dõi nhu cầu khai báo.</p>
+        </div>
+      </div>
+
+      <div id="formSelector" class="form-selector-grid"></div>
+      <p id="selectionMessage" class="form-message form-message--sheet" aria-live="polite"></p>
+    </section>
+
+    <section id="activeFormCard" class="card card--sheet" hidden data-anchor="active-form">
+      <div class="card__header card__header--sheet">
+        <div>
+          <h2 id="activeFormTitle">Mục kê khai thông tin</h2>
+          <p id="activeFormDescription">Điền đủ các mục bắt buộc trước khi chuyển bước. Riêng ngày vào Đảng và ngày vào Đoàn có thể để trống nếu chưa có.</p>
         </div>
       </div>
 
@@ -70,13 +73,38 @@
       </div>
       <p id="formMessage" class="form-message form-message--sheet" aria-live="polite"></p>
     </section>
+
+    <section class="contact-card">
+      <div class="contact-card__header">
+        <h2>Thông tin liên hệ BCHQS</h2>
+      </div>
+      <div class="contact-card__grid">
+        <div class="contact-card__item">
+          <strong>Địa chỉ</strong>
+          <span>{{ ORG_ADDRESS }}</span>
+        </div>
+        <div class="contact-card__item">
+          <strong>Điện thoại</strong>
+          <span>{{ ORG_PHONE }}</span>
+        </div>
+        <div class="contact-card__item">
+          <strong>Email</strong>
+          <span>{{ ORG_EMAIL }}</span>
+        </div>
+        <div class="contact-card__item">
+          <strong>Facebook</strong>
+          <span>{{ ORG_FACEBOOK }}</span>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script>
     window.APP_BOOTSTRAP = {
-      publicBaseUrl: "{{ PUBLIC_BASE_URL }}"
+      publicBaseUrl: "{{ PUBLIC_BASE_URL }}",
+      formOptions: {{ FORM_OPTIONS_JSON }}
     };
   </script>
-  <script src="/static/app.js?v=20260401-14"></script>
+  <script src="/static/app.js?v=20260421-form-choices-6"></script>
 </body>
 </html>

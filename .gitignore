@@ -8,6 +8,11 @@ __pycache__/
 venv/
 
 data/*.db
+data/*.db-*
+data/*.bak*
+data/*.recovered.db*
+data/*.runtime.db*
+data/codex-probe.db*
 data/*.log
 data/*.sqlite
 data/*.stdout.log

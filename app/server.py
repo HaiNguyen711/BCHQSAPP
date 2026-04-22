@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import hashlib
 import hmac
@@ -24,10 +24,21 @@ from .config import (
     STATIC_DIR,
     TEMPLATE_DIR,
 )
-from .database import export_csv, export_excel, init_db, list_submissions, save_submission, summarize_submissions
+from .database import (
+    FORM_LABELS,
+    export_csv,
+    export_excel,
+    init_db,
+    list_form_interest_logs,
+    list_submissions,
+    save_form_interest,
+    save_submission,
+    summarize_submissions,
+)
 from .schema import load_schema
 
 SESSION_COOKIE_NAME = "bchqs_admin_session"
+SUPPORTED_FORM_CODES = {"1", "2"}
 
 
 def render_template(name: str, context: dict[str, str]) -> bytes:
@@ -63,6 +74,12 @@ class AppHandler(BaseHTTPRequestHandler):
                 self._send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
                 return
             self._send_json({"items": list_submissions()})
+            return
+        if path == "/api/admin/form-interest-logs":
+            if not self._is_admin(parsed.query):
+                self._send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
+                return
+            self._send_json({"items": list_form_interest_logs()})
             return
         if path == "/api/admin/summary":
             if not self._is_admin(parsed.query):
@@ -109,6 +126,9 @@ class AppHandler(BaseHTTPRequestHandler):
         if self.path == "/api/submissions":
             self._handle_submission()
             return
+        if self.path == "/api/form-interest":
+            self._handle_form_interest()
+            return
         if self.path == "/api/admin/login":
             self._handle_admin_login()
             return
@@ -124,16 +144,56 @@ class AppHandler(BaseHTTPRequestHandler):
             self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
             return
 
-        errors = self._validate_submission(payload)
+        form_code = str(payload.get("form_code", "")).strip()
+        form_payload = payload.get("payload")
+        if form_code not in SUPPORTED_FORM_CODES:
+            self._send_json({"error": "Loai phieu khong hop le."}, status=HTTPStatus.BAD_REQUEST)
+            return
+        if not isinstance(form_payload, dict):
+            self._send_json({"error": "Du lieu phieu khong hop le."}, status=HTTPStatus.BAD_REQUEST)
+            return
+
+        errors = self._validate_submission(form_payload)
         if errors:
             self._send_json({"error": "Validation failed", "fields": errors}, status=HTTPStatus.BAD_REQUEST)
             return
 
-        submission_id = save_submission(payload)
+        submission_id = save_submission(form_payload, form_code)
         self._send_json(
             {
                 "message": "Đã tiếp nhận thông tin thành công.",
                 "submission_id": submission_id,
+                "form_code": form_code,
+                "form_label": FORM_LABELS.get(form_code, form_code),
+            },
+            status=HTTPStatus.CREATED,
+        )
+
+    def _handle_form_interest(self) -> None:
+        try:
+            payload = self._read_json_body()
+        except ValueError as exc:
+            self._send_json({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+            return
+
+        form_code = str(payload.get("form_code", "")).strip()
+        if form_code not in FORM_LABELS or form_code in SUPPORTED_FORM_CODES:
+            self._send_json({"error": "Loai phieu tracking khong hop le."}, status=HTTPStatus.BAD_REQUEST)
+            return
+
+        source = str(payload.get("source", "landing")).strip() or "landing"
+        tracking_id = save_form_interest(
+            form_code=form_code,
+            source=source,
+            client_ip=self._get_client_ip(),
+            user_agent=self.headers.get("User-Agent", ""),
+        )
+        self._send_json(
+            {
+                "message": "Phiếu này đang được phát triển.",
+                "tracking_id": tracking_id,
+                "form_code": form_code,
+                "form_label": FORM_LABELS.get(form_code, form_code),
             },
             status=HTTPStatus.CREATED,
         )
@@ -184,6 +244,10 @@ class AppHandler(BaseHTTPRequestHandler):
                 "ORG_EMAIL": ORG_EMAIL,
                 "ORG_FACEBOOK": ORG_FACEBOOK,
                 "PUBLIC_BASE_URL": public_base_url,
+                "FORM_OPTIONS_JSON": json.dumps(
+                    [{"code": code, "label": label} for code, label in FORM_LABELS.items()],
+                    ensure_ascii=False,
+                ),
             },
         )
         self._send_html(body)
@@ -237,6 +301,12 @@ class AppHandler(BaseHTTPRequestHandler):
         host = forwarded_host or self.headers.get("Host", f"localhost:{PORT}")
         proto = forwarded_proto or ("https" if self.server.server_port == 443 else "http")
         return f"{proto}://{host}".rstrip("/")
+
+    def _get_client_ip(self) -> str:
+        forwarded_for = self.headers.get("X-Forwarded-For", "")
+        if forwarded_for:
+            return forwarded_for.split(",")[0].strip()
+        return self.client_address[0]
 
     def _read_json_body(self) -> dict:
         content_length = int(self.headers.get("Content-Length", "0"))
