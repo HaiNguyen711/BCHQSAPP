@@ -127,6 +127,7 @@
         return;
       }
       modal.hidden = true;
+      modal.style.display = "none";
       document.body.classList.remove("admin-modal-open");
       try {
         if (window.state) {
@@ -148,19 +149,61 @@
         window.forceCloseAdminModal();
       }
     };
+    window.resetAdminModalState = function () {
+      var modal = document.getElementById("adminModal");
+      if (!modal) {
+        return;
+      }
+      modal.hidden = true;
+      modal.style.display = "none";
+      document.body.classList.remove("admin-modal-open");
+      var body = document.getElementById("adminModalBody");
+      var actions = document.getElementById("adminModalActions");
+      var eyebrow = document.getElementById("adminModalEyebrow");
+      var title = document.getElementById("adminModalTitle");
+      var subtitle = document.getElementById("adminModalSubtitle");
+      if (body) {
+        body.innerHTML = "";
+      }
+      if (actions) {
+        actions.innerHTML = "";
+      }
+      if (eyebrow) {
+        eyebrow.textContent = "";
+      }
+      if (title) {
+        title.textContent = "Chi tiết hồ sơ";
+      }
+      if (subtitle) {
+        subtitle.textContent = "";
+      }
+    };
     document.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
         window.forceCloseAdminModal();
       }
     });
+    document.addEventListener("DOMContentLoaded", function () {
+      window.resetAdminModalState();
+    });
     window.addEventListener("error", function () {
       window.hideBrokenAdminModal();
     });
     window.addEventListener("load", function () {
+      window.resetAdminModalState();
       window.setTimeout(window.hideBrokenAdminModal, 250);
       window.setTimeout(window.hideBrokenAdminModal, 1000);
     });
+    window.addEventListener("pageshow", function () {
+      window.resetAdminModalState();
+      window.setTimeout(window.hideBrokenAdminModal, 50);
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") {
+        window.setTimeout(window.hideBrokenAdminModal, 50);
+      }
+    });
   </script>
-  <script src="/static/app.js?v=20260422-admin-layout-5"></script>
+  <script src="/static/app.js?v=20260422-admin-layout-6"></script>
 </body>
 </html>
