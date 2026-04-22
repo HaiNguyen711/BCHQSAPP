@@ -1484,7 +1484,7 @@ pre {
 
 .profile-line {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: 10px;
   padding: 5px 0;
   border-bottom: 1px dotted rgba(93, 50, 36, 0.38);
@@ -1492,17 +1492,18 @@ pre {
 }
 
 .profile-line--double {
-  grid-template-columns: 180px 1fr 170px 1fr;
+  grid-template-columns: 200px 1fr 150px 1fr;
 }
 
 .profile-line--triple {
-  grid-template-columns: 138px 1fr 120px 1fr 92px 1fr;
+  grid-template-columns: 112px 1fr 100px 1fr 82px 1fr;
 }
 
 .profile-line span:first-child,
 .profile-line span:nth-child(3),
 .profile-line span:nth-child(5) {
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .profile-sheet__footer {
