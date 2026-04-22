@@ -8,7 +8,12 @@ const state = {
   adminItems: [],
   adminInterestItems: [],
   adminCitizenIdFilter: "",
+  currentAdminModalItem: null,
+  currentAdminModalMode: "",
+  currentAdminModalTab: "personal",
 };
+
+window.state = state;
 
 const ACTIVE_FORM_CODES = new Set(["1", "2"]);
 const NEIGHBORHOOD_OPTIONS = [
@@ -1215,36 +1220,23 @@ function handleAdminTableActions(event) {
 }
 
 function openSubmissionDetailModal(item) {
-  const bodyHtml = `
-    <div class="admin-modal-tabs">
-      <button type="button" class="admin-modal-tab is-active" data-admin-tab="personal">Bản thân</button>
-      <button type="button" class="admin-modal-tab" data-admin-tab="family">Gia đình</button>
-    </div>
-    <div class="admin-modal-panel is-active" data-admin-panel="personal">
-      ${renderDetailPanelPersonal(item)}
-    </div>
-    <div class="admin-modal-panel" data-admin-panel="family">
-      ${renderDetailPanelFamily(item)}
-    </div>
-  `;
+  state.currentAdminModalMode = "detail";
+  state.currentAdminModalTab = "personal";
   openAdminModal({
     eyebrow: item.form_label || "Hồ sơ công dân",
     title: item.full_name || "Thông tin công dân",
     subtitle: `CCCD ${escapeHtml(item.citizen_id_number || "-")} · Tạo lúc ${escapeHtml(formatDateTime(item.created_at))}`,
-    bodyHtml,
+    bodyHtml: renderAdminModalScaffold("detail"),
     wide: true,
     paper: false,
+    item,
   });
+  scheduleAdminModalRender();
 }
 
 function openSubmissionProfileModal(item) {
-  const bodyHtml = `
-    <div class="profile-preview-shell">
-      <article class="profile-sheet" id="adminProfileSheet">
-        ${buildProfileDocumentMarkup(item)}
-      </article>
-    </div>
-  `;
+  state.currentAdminModalMode = "profile";
+  state.currentAdminModalTab = "personal";
   const actionsHtml = `
     <button type="button" class="ghost-btn" data-modal-action="print-profile">In hồ sơ</button>
     <button type="button" class="ghost-btn" data-modal-action="export-pdf">Xuất PDF</button>
@@ -1255,12 +1247,13 @@ function openSubmissionProfileModal(item) {
     eyebrow: "Biểu mẫu lý lịch",
     title: `Hồ sơ NVQS - ${item.full_name || "Công dân"}`,
     subtitle: "Xem trước hồ sơ để in hoặc xuất Word theo biểu mẫu quản trị.",
-    bodyHtml,
+    bodyHtml: renderAdminModalScaffold("profile"),
     actionsHtml,
     wide: true,
     paper: true,
     item,
   });
+  scheduleAdminModalRender();
 }
 
 function openAdminModal({ eyebrow = "", title = "", subtitle = "", bodyHtml = "", actionsHtml = "", wide = false, paper = false, item = null }) {
@@ -1274,6 +1267,7 @@ function openAdminModal({ eyebrow = "", title = "", subtitle = "", bodyHtml = ""
   dialog.classList.toggle("admin-modal__dialog--wide", wide);
   dialog.classList.toggle("admin-modal__dialog--paper", paper);
   modal.hidden = false;
+  modal.style.display = "grid";
   document.body.classList.add("admin-modal-open");
   state.currentAdminModalItem = item;
 }
@@ -1284,8 +1278,10 @@ function closeAdminModal() {
     return;
   }
   modal.hidden = true;
+  modal.style.display = "none";
   document.body.classList.remove("admin-modal-open");
   state.currentAdminModalItem = null;
+  state.currentAdminModalMode = "";
 }
 
 function handleAdminModalClick(event) {
@@ -1296,7 +1292,9 @@ function handleAdminModalClick(event) {
   }
   const tabButton = event.target.closest("[data-admin-tab]");
   if (tabButton) {
-    setAdminModalTab(tabButton.dataset.adminTab || "");
+    state.currentAdminModalTab = tabButton.dataset.adminTab || "personal";
+    setAdminModalTab(state.currentAdminModalTab);
+    scheduleAdminModalRender();
     return;
   }
   const actionButton = event.target.closest("[data-modal-action]");
@@ -1326,9 +1324,84 @@ function setAdminModalTab(tabName) {
   document.querySelectorAll(".admin-modal-tab").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.adminTab === tabName);
   });
-  document.querySelectorAll(".admin-modal-panel").forEach((panel) => {
-    panel.classList.toggle("is-active", panel.dataset.adminPanel === tabName);
-  });
+}
+
+function renderAdminModalScaffold(mode) {
+  if (mode === "detail") {
+    return `
+      <div class="admin-modal-tabs">
+        <button type="button" class="admin-modal-tab ${state.currentAdminModalTab === "personal" ? "is-active" : ""}" data-admin-tab="personal">Bản thân</button>
+        <button type="button" class="admin-modal-tab ${state.currentAdminModalTab === "family" ? "is-active" : ""}" data-admin-tab="family">Gia đình</button>
+      </div>
+      <div id="adminModalPanelHost" class="admin-modal-panel-host">
+        ${renderAdminModalLoading()}
+      </div>
+    `;
+  }
+
+  return `
+    <div id="adminModalPanelHost" class="admin-modal-panel-host">
+      ${renderAdminModalLoading("Đang dựng biểu mẫu lý lịch...")}
+    </div>
+  `;
+}
+
+function renderAdminModalLoading(text = "Đang tải nội dung hồ sơ...") {
+  return `
+    <div class="admin-modal-loading">
+      <div class="admin-modal-loading__dot"></div>
+      <span>${escapeHtml(text)}</span>
+    </div>
+  `;
+}
+
+function scheduleAdminModalRender() {
+  const host = document.getElementById("adminModalPanelHost");
+  if (!host || !state.currentAdminModalItem) {
+    return;
+  }
+  host.innerHTML = renderAdminModalLoading(
+    state.currentAdminModalMode === "profile"
+      ? "Đang dựng biểu mẫu lý lịch..."
+      : "Đang tải chi tiết hồ sơ..."
+  );
+  window.setTimeout(() => {
+    try {
+      renderAdminModalContent();
+    } catch (error) {
+      console.error("admin-modal-content-error", error);
+      const currentHost = document.getElementById("adminModalPanelHost");
+      if (currentHost) {
+        currentHost.innerHTML = renderModalErrorState(error?.stack || error?.message || "Unknown error");
+      }
+    }
+  }, 16);
+}
+
+function renderAdminModalContent() {
+  const host = document.getElementById("adminModalPanelHost");
+  const item = state.currentAdminModalItem;
+  if (!host || !item) {
+    return;
+  }
+
+  if (state.currentAdminModalMode === "profile") {
+    host.innerHTML = `
+      <div class="profile-preview-shell">
+        <article class="profile-sheet" id="adminProfileSheet">
+          ${buildProfileDocumentMarkup(item)}
+        </article>
+      </div>
+    `;
+    return;
+  }
+
+  if (state.currentAdminModalMode === "detail") {
+    setAdminModalTab(state.currentAdminModalTab);
+    host.innerHTML = state.currentAdminModalTab === "family"
+      ? renderDetailPanelFamily(item)
+      : renderDetailPanelPersonal(item);
+  }
 }
 
 function renderDetailPanelPersonal(item) {
