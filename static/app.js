@@ -1599,6 +1599,16 @@ function buildProfileDocumentMarkup(item) {
   `;
 }
 
+function buildProfileBookletMarkup(item) {
+  const template = document.createElement("template");
+  template.innerHTML = buildProfileDocumentMarkup(item).trim();
+  const pages = Array.from(template.content.querySelectorAll(".profile-page"));
+  const bookletOrder = [3, 0, 1, 2];
+  return bookletOrder
+    .map((pageIndex) => pages[pageIndex]?.outerHTML || "")
+    .join("");
+}
+
 function buildFamilyNarratives(item) {
   const family = item.payload?.family_basic || {};
   const marital = item.payload?.marital_basic || {};
@@ -1649,7 +1659,7 @@ function printProfileDocument(item, mode = "print") {
   if (!printWindow) {
     return;
   }
-  const content = buildProfileDocumentMarkup(item);
+  const content = buildProfileBookletMarkup(item);
   const helperText = mode === "pdf"
     ? '<div class="profile-export-hint">Trong hộp thoại in, chọn đích “Save as PDF” để lưu thành file PDF.</div>'
     : "";
