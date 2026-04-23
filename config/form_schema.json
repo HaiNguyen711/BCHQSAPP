@@ -94,13 +94,12 @@
         { "id": "occupation", "label": "Nghề nghiệp hiện tại", "type": "text", "required": false },
         { "id": "salary_grade", "label": "Lương ngạch", "type": "text", "required": false },
         { "id": "salary_step", "label": "Bậc lương", "type": "text", "required": false },
-        { "id": "workplace", "label": "Nơi làm việc", "type": "text", "required": true },
+        { "id": "workplace", "label": "Nơi làm việc", "type": "text", "required": false },
         { "id": "youth_union_join_date", "label": "Ngày vào Đoàn", "type": "date", "required": false },
         { "id": "party_join_date", "label": "Ngày vào Đảng", "type": "date", "required": false },
         { "id": "party_official_date", "label": "Ngày chính thức vào Đảng", "type": "date", "required": false },
         { "id": "reward_record", "label": "Khen thưởng", "type": "text", "required": false },
-        { "id": "discipline_record", "label": "Kỷ luật", "type": "text", "required": false },
-        { "id": "abroad_history", "label": "Đã đi nước ngoài (tên nước, thời gian, lý do)", "type": "text", "required": true }
+        { "id": "discipline_record", "label": "Kỷ luật", "type": "text", "required": false }
       ]
     },
     {
