@@ -1603,9 +1603,16 @@ function buildProfileBookletMarkup(item) {
   const template = document.createElement("template");
   template.innerHTML = buildProfileDocumentMarkup(item).trim();
   const pages = Array.from(template.content.querySelectorAll(".profile-page"));
-  const bookletOrder = [3, 0, 1, 2];
-  return bookletOrder
-    .map((pageIndex) => pages[pageIndex]?.outerHTML || "")
+  const spreads = [
+    [3, 0],
+    [1, 2],
+  ];
+  return spreads
+    .map((spread) => `
+      <div class="profile-spread">
+        ${spread.map((pageIndex) => pages[pageIndex]?.outerHTML || "").join("")}
+      </div>
+    `)
     .join("");
 }
 
@@ -1681,10 +1688,10 @@ function printProfileDocument(item, mode = "print") {
         <style>
           @page { size: A3 landscape; margin: 0; }
           body { margin: 0; padding: 16px; background: #f7f1ed; font-family: "Times New Roman", serif; color: #18110d; }
-          .profile-sheet { width: 420mm; margin: 0 auto; display: grid; grid-template-columns: 210mm 210mm; grid-auto-rows: 297mm; gap: 0; background: #fffefc; }
-          .profile-page { position: relative; width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 14mm 12mm 12mm; background: #fffefc; box-shadow: 0 16px 42px rgba(65, 30, 18, 0.12); break-after: auto; page-break-after: auto; overflow: hidden; }
-          .profile-page:nth-child(2n) { break-after: page; page-break-after: always; }
-          .profile-page:last-child { break-after: auto; page-break-after: auto; }
+          .profile-sheet { width: 420mm; margin: 0 auto; display: block; }
+          .profile-spread { width: 420mm; min-height: 297mm; box-sizing: border-box; margin: 0 auto 16px; padding: 18mm 9.4mm 15mm 18mm; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 12.7mm; background: #fffefc; box-shadow: 0 16px 42px rgba(65, 30, 18, 0.12); break-after: page; page-break-after: always; }
+          .profile-spread:last-child { break-after: auto; page-break-after: auto; margin-bottom: 0; }
+          .profile-page { position: relative; width: auto; height: 264mm; min-height: 0; box-sizing: border-box; padding: 0; background: #fffefc; overflow: hidden; }
           .profile-sheet__header { text-align: center; }
           .profile-sheet__header p { margin: 0; font-size: 15px; font-weight: 700; }
           .profile-template-meta { display: grid; justify-items: end; gap: 2px; margin-top: 8px; color: #2c1711; font-size: 13px; }
@@ -1723,8 +1730,9 @@ function printProfileDocument(item, mode = "print") {
           @media print {
             body { background: #fff; padding: 0; }
             .profile-export-hint { display: none; }
-            .profile-sheet { width: 420mm; margin: 0; display: grid; grid-template-columns: 210mm 210mm; grid-auto-rows: 297mm; }
-            .profile-page { box-shadow: none; width: 210mm; height: 297mm; min-height: 297mm; }
+            .profile-sheet { width: 420mm; margin: 0; display: block; }
+            .profile-spread { width: 420mm; height: 297mm; min-height: 297mm; margin: 0; box-shadow: none; }
+            .profile-page { width: auto; height: 264mm; min-height: 0; box-shadow: none; }
           }
         </style>
       </head>
