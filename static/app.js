@@ -1673,9 +1673,9 @@ function printProfileDocument(item, mode = "print") {
           .profile-page h5 { margin: 12px 0 6px; font-size: 15px; }
           .profile-page p { line-height: 1.45; margin: 0 0 10px; }
           .profile-sheet__hint, .profile-empty { font-style: italic; }
-          .profile-line { display: grid; grid-template-columns: 260px 1fr; gap: 10px; padding: 4px 0; border-bottom: 1px dotted #b8a79d; line-height: 1.35; font-size: 14px; }
-          .profile-line--double { grid-template-columns: 200px 1fr 150px 1fr; }
-          .profile-line--triple { grid-template-columns: 112px 1fr 100px 1fr 82px 1fr; }
+          .profile-line { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; padding: 4px 0; border-bottom: 1px dotted #b8a79d; line-height: 1.35; font-size: 14px; }
+          .profile-line--double { grid-template-columns: 190px minmax(0, 1fr) 140px minmax(0, 1fr); }
+          .profile-line--triple { grid-template-columns: 104px minmax(0, 1fr) 92px minmax(0, 1fr) 78px minmax(0, 1fr); }
           .profile-line span:first-child, .profile-line span:nth-child(3), .profile-line span:nth-child(5) { font-weight: 700; white-space: nowrap; }
           .profile-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 13px; line-height: 1.35; }
           .profile-table th, .profile-table td { border: 1px solid rgba(56, 17, 13, 0.55); padding: 6px 7px; vertical-align: top; }

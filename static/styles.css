@@ -1526,8 +1526,8 @@ pre {
 
 .profile-line {
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 10px;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 16px;
   padding: 4px 0;
   border-bottom: 1px dotted rgba(93, 50, 36, 0.38);
   line-height: 1.35;
@@ -1535,11 +1535,11 @@ pre {
 }
 
 .profile-line--double {
-  grid-template-columns: 200px 1fr 150px 1fr;
+  grid-template-columns: 190px minmax(0, 1fr) 140px minmax(0, 1fr);
 }
 
 .profile-line--triple {
-  grid-template-columns: 112px 1fr 100px 1fr 82px 1fr;
+  grid-template-columns: 104px minmax(0, 1fr) 92px minmax(0, 1fr) 78px minmax(0, 1fr);
 }
 
 .profile-line span:first-child,
