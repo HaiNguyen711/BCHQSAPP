@@ -1550,13 +1550,14 @@ pre {
 }
 
 .profile-label {
-  font-weight: 700;
+  font-weight: 400;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: clip;
 }
 
 .profile-value {
+  font-weight: 700;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;

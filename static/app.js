@@ -1704,8 +1704,8 @@ function printProfileDocument(item, mode = "print") {
           .profile-line--wide-label { grid-template-columns: 330px minmax(0, 1fr); }
           .profile-line--double { grid-template-columns: 145px minmax(0, 1fr) 105px minmax(0, 1fr); gap: 8px; }
           .profile-line--triple { grid-template-columns: 80px minmax(0, 1fr) 72px minmax(0, 1fr) 70px minmax(0, 1fr); gap: 8px; }
-          .profile-label { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: clip; }
-          .profile-value { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+          .profile-label { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+          .profile-value { font-weight: 700; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: clip; }
           .profile-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 13px; line-height: 1.35; }
           .profile-table th, .profile-table td { border: 1px solid rgba(56, 17, 13, 0.55); padding: 6px 7px; vertical-align: top; }
           .profile-table th { text-align: center; font-weight: 700; background: #fbf0ea; }
