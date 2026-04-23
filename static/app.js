@@ -1645,7 +1645,7 @@ function buildSelfNarratives(item) {
 }
 
 function printProfileDocument(item, mode = "print") {
-  const printWindow = window.open("", "_blank", "width=1100,height=900");
+  const printWindow = window.open("", "_blank", "width=1500,height=980");
   if (!printWindow) {
     return;
   }
@@ -1660,15 +1660,16 @@ function printProfileDocument(item, mode = "print") {
         <meta charset="UTF-8">
         <title>Hồ sơ NVQS</title>
         <style>
-          @page { size: A4; margin: 0; }
+          @page { size: A3 landscape; margin: 0; }
           body { margin: 0; padding: 16px; background: #f7f1ed; font-family: "Times New Roman", serif; color: #18110d; }
-          .profile-sheet { width: 210mm; margin: 0 auto; display: grid; gap: 16px; }
-          .profile-page { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 16mm 15mm 14mm; background: #fffefc; box-shadow: 0 16px 42px rgba(65, 30, 18, 0.12); break-after: page; page-break-after: always; }
+          .profile-sheet { width: 420mm; margin: 0 auto; display: grid; grid-template-columns: 210mm 210mm; grid-auto-rows: 297mm; gap: 0; background: #fffefc; }
+          .profile-page { position: relative; width: 210mm; height: 297mm; min-height: 297mm; box-sizing: border-box; padding: 14mm 12mm 12mm; background: #fffefc; box-shadow: 0 16px 42px rgba(65, 30, 18, 0.12); break-after: auto; page-break-after: auto; overflow: hidden; }
+          .profile-page:nth-child(2n) { break-after: page; page-break-after: always; }
           .profile-page:last-child { break-after: auto; page-break-after: auto; }
           .profile-sheet__header { text-align: center; }
           .profile-sheet__header p { margin: 0; font-size: 15px; font-weight: 700; }
           .profile-template-meta { display: grid; justify-items: end; gap: 2px; margin-top: 8px; color: #2c1711; font-size: 13px; }
-          .profile-title { margin: 18px 0 16px; text-align: center; font-size: 26px; letter-spacing: 0.08em; }
+          .profile-title { margin: 18px 0 16px; text-align: center; font-size: 25px; letter-spacing: 0.08em; }
           .profile-page h4 { margin: 0 0 10px; font-size: 17px; }
           .profile-page h5 { margin: 12px 0 6px; font-size: 15px; }
           .profile-page p { line-height: 1.45; margin: 0 0 10px; }
@@ -1692,12 +1693,12 @@ function printProfileDocument(item, mode = "print") {
           .profile-note-lines { display: grid; gap: 14px; margin-top: 18px; }
           .profile-note-lines span { border-bottom: 1px dotted rgba(56, 17, 13, 0.5); min-height: 18px; }
           .profile-page-number { position: absolute; right: 15mm; bottom: 8mm; color: #76564c; font-size: 12px; }
-          .profile-export-hint { max-width: 210mm; margin: 0 auto 16px; padding: 14px 16px; border-radius: 14px; background: #fff3d9; color: #5f3c00; font-family: Georgia, serif; }
+          .profile-export-hint { max-width: 420mm; margin: 0 auto 16px; padding: 14px 16px; border-radius: 14px; background: #fff3d9; color: #5f3c00; font-family: Georgia, serif; }
           @media print {
             body { background: #fff; padding: 0; }
             .profile-export-hint { display: none; }
-            .profile-sheet { width: auto; margin: 0; display: block; }
-            .profile-page { box-shadow: none; width: 210mm; min-height: 297mm; }
+            .profile-sheet { width: 420mm; margin: 0; display: grid; grid-template-columns: 210mm 210mm; grid-auto-rows: 297mm; }
+            .profile-page { box-shadow: none; width: 210mm; height: 297mm; min-height: 297mm; }
           }
         </style>
       </head>
