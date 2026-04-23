@@ -1505,54 +1505,88 @@ function buildProfileDocumentMarkup(item) {
   const marital = item.payload?.marital_basic || {};
   const siblings = item.payload?.siblings || [];
   const children = item.payload?.children || [];
+  const fatherHistory = item.payload?.father_history || [];
+  const motherHistory = item.payload?.mother_history || [];
+  const personalHistory = item.payload?.personal_history || [];
   return `
-    <header class="profile-sheet__header">
-      <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
-      <p>Độc lập - Tự do - Hạnh phúc</p>
-      <h3>LÝ LỊCH NGHĨA VỤ QUÂN SỰ</h3>
-    </header>
-    <section class="profile-sheet__section">
+    <section class="profile-page">
+      ${renderProfileHeader()}
+      <h3 class="profile-title">LÝ LỊCH NGHĨA VỤ QUÂN SỰ</h3>
       <h4>I. SƠ YẾU LÝ LỊCH</h4>
-      ${renderProfileLine("Họ, chữ đệm và tên thường dùng", upperCase(item.full_name))}
-      ${renderProfileLine("Họ, chữ đệm và tên khai sinh", personal.birth_name || item.full_name)}
-      ${renderProfileDoubleLine("Sinh ngày", personal.date_of_birth, "Giới tính", personal.gender)}
-      ${renderProfileLine("Số thẻ Căn cước công dân", item.citizen_id_number)}
-      ${renderProfileLine("Nơi đăng ký khai sinh", personal.birth_registration_place)}
-      ${renderProfileLine("Quê quán", personal.hometown)}
-      ${renderProfileTripleLine("Dân tộc", personal.ethnicity, "Tôn giáo", personal.religion, "Quốc tịch", personal.nationality)}
-      ${renderProfileLine("Nơi thường trú của gia đình", personal.family_permanent_residence)}
-      ${renderProfileLine("Nơi ở hiện tại của bản thân", personal.current_residence)}
-      ${renderProfileDoubleLine("Thành phần gia đình", personal.family_background, "Bản thân", personal.personal_background)}
-      ${renderProfileDoubleLine("Trình độ văn hóa", personal.education_level, "Năm tốt nghiệp", personal.graduation_year)}
-      ${renderProfileDoubleLine("Ngành, nghề đào tạo", personal.major, "Trình độ đào tạo", personal.training_level)}
-      ${renderProfileLine("Trình độ ngoại ngữ", personal.foreign_language)}
-      ${renderProfileDoubleLine("Ngày vào Đảng CSVN", personal.party_join_date, "Chính thức", personal.party_official_date)}
-      ${renderProfileLine("Ngày vào Đoàn TNCS Hồ Chí Minh", personal.youth_union_join_date)}
-      ${renderProfileDoubleLine("Khen thưởng", personal.reward_record, "Kỷ luật", personal.discipline_record)}
-      ${renderProfileTripleLine("Nghề nghiệp", personal.occupation, "Lương ngạch", personal.salary_grade, "Bậc", personal.salary_step)}
-      ${renderProfileLine("Nơi làm việc (học tập)", personal.workplace)}
-      ${renderProfileDoubleLine("Họ tên cha", family.father_name, "Tình trạng", family.father_status)}
-      ${renderProfileDoubleLine("Sinh năm cha", extractYear(family.father_date_of_birth), "Nghề nghiệp cha", family.father_occupation)}
-      ${renderProfileDoubleLine("Họ tên mẹ", family.mother_name, "Tình trạng", family.mother_status)}
-      ${renderProfileDoubleLine("Sinh năm mẹ", extractYear(family.mother_date_of_birth), "Nghề nghiệp mẹ", family.mother_occupation)}
-      ${renderProfileDoubleLine("Họ tên vợ/chồng", marital.spouse_name, "Sinh năm", extractYear(marital.spouse_date_of_birth))}
-      ${renderProfileDoubleLine("Nghề nghiệp vợ/chồng", marital.spouse_occupation, "Bản thân đã có", marital.children_count ? `${marital.children_count} con` : "")}
-      ${renderProfileLine("Cha mẹ có", family.total_children ? `${family.total_children} người con, ${displayValue(family.sons_count)} trai, ${displayValue(family.daughters_count)} gái. Bản thân là con thứ ${displayValue(family.birth_order)}.` : "")}
+      <div class="profile-form-grid">
+        ${renderProfileLine("Họ, chữ đệm và tên thường dùng", upperCase(item.full_name))}
+        ${renderProfileLine("Họ, chữ đệm và tên khai sinh", personal.birth_name || item.full_name)}
+        ${renderProfileDoubleLine("Sinh ngày", personal.date_of_birth, "Giới tính", personal.gender)}
+        ${renderProfileLine("Số thẻ Căn cước công dân", item.citizen_id_number)}
+        ${renderProfileLine("Nơi đăng ký khai sinh", personal.birth_registration_place)}
+        ${renderProfileLine("Quê quán", personal.hometown)}
+        ${renderProfileTripleLine("Dân tộc", personal.ethnicity, "Tôn giáo", personal.religion, "Quốc tịch", personal.nationality)}
+        ${renderProfileLine("Nơi thường trú của gia đình", personal.family_permanent_residence)}
+        ${renderProfileLine("Nơi ở hiện tại của bản thân", personal.current_residence || personal.street_address)}
+        ${renderProfileDoubleLine("Thành phần gia đình", personal.family_background, "Bản thân", personal.personal_background)}
+        ${renderProfileDoubleLine("Trình độ văn hóa", personal.education_level, "Năm tốt nghiệp", personal.graduation_year)}
+        ${renderProfileDoubleLine("Ngành, nghề đào tạo", personal.major, "Trình độ đào tạo", personal.training_level)}
+        ${renderProfileLine("Trình độ ngoại ngữ", personal.foreign_language)}
+        ${renderProfileDoubleLine("Ngày vào Đảng CSVN", personal.party_join_date, "Chính thức", personal.party_official_date)}
+        ${renderProfileLine("Ngày vào Đoàn TNCS Hồ Chí Minh", personal.youth_union_join_date)}
+        ${renderProfileDoubleLine("Khen thưởng", personal.reward_record, "Kỷ luật", personal.discipline_record)}
+        ${renderProfileTripleLine("Nghề nghiệp", personal.occupation, "Lương ngạch", personal.salary_grade, "Bậc", personal.salary_step)}
+        ${renderProfileLine("Nơi làm việc (học tập)", personal.workplace)}
+        ${renderProfileDoubleLine("Họ tên cha", family.father_name, "Tình trạng", family.father_status)}
+        ${renderProfileDoubleLine("Sinh năm cha", extractYear(family.father_date_of_birth), "Nghề nghiệp cha", family.father_occupation)}
+        ${renderProfileDoubleLine("Họ tên mẹ", family.mother_name, "Tình trạng", family.mother_status)}
+        ${renderProfileDoubleLine("Sinh năm mẹ", extractYear(family.mother_date_of_birth), "Nghề nghiệp mẹ", family.mother_occupation)}
+        ${renderProfileDoubleLine("Họ tên vợ/chồng", marital.spouse_name, "Sinh năm", extractYear(marital.spouse_date_of_birth))}
+        ${renderProfileDoubleLine("Nghề nghiệp vợ/chồng", marital.spouse_occupation, "Bản thân đã có", marital.children_count ? `${marital.children_count} con` : "")}
+        ${renderProfileLine("Cha mẹ có", family.total_children ? `${family.total_children} người con, ${displayValue(family.sons_count)} trai, ${displayValue(family.daughters_count)} gái. Bản thân là con thứ ${displayValue(family.birth_order)}.` : "")}
+      </div>
+      ${renderPageNumber(1)}
     </section>
-    <section class="profile-sheet__section">
+    <section class="profile-page">
       <h4>II. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ CỦA GIA ĐÌNH</h4>
-      ${renderNarrativeParagraphs(buildFamilyNarratives(item))}
+      <h5>1. Cha</h5>
+      ${renderNarrativeParagraphs([buildParentNarrative("Cha", family.father_name, family.father_date_of_birth, family.father_occupation, family.father_status, family.father_current_residence)])}
+      ${renderProfileHistoryTable(fatherHistory, "Quá trình của cha")}
+      <h5>2. Mẹ</h5>
+      ${renderNarrativeParagraphs([buildParentNarrative("Mẹ", family.mother_name, family.mother_date_of_birth, family.mother_occupation, family.mother_status, family.mother_current_residence)])}
+      ${renderProfileHistoryTable(motherHistory, "Quá trình của mẹ")}
+      <h5>3. Vợ/chồng và con</h5>
+      ${renderNarrativeParagraphs(marital.spouse_name ? [`Vợ/chồng: ${displayValue(marital.spouse_name)}, sinh năm ${displayValue(extractYear(marital.spouse_date_of_birth))}, nghề nghiệp ${displayValue(marital.spouse_occupation)}, nơi ở hiện tại ${displayValue(marital.spouse_current_residence)}. ${displayValue(marital.spouse_notes)}`] : ["Chưa khai thông tin vợ/chồng."])}
+      ${renderProfilePeopleTable(children, "Thông tin con")}
+      <h5>4. Anh, chị, em ruột</h5>
+      ${renderProfilePeopleTable(siblings, "Thông tin anh, chị, em")}
+      ${renderPageNumber(2)}
     </section>
-    <section class="profile-sheet__section">
+    <section class="profile-page">
       <h4>III. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ, QUÁ TRÌNH CÔNG TÁC CỦA BẢN THÂN</h4>
       <p class="profile-sheet__hint">(Nêu thời gian, kết quả học tập, rèn luyện phấn đấu từ nhỏ đến thời điểm nhập ngũ)</p>
-      ${renderNarrativeParagraphs(buildSelfNarratives(item))}
+      ${renderProfileHistoryTable(personalHistory, "Quá trình bản thân", true)}
+      <h5>Khen thưởng, kỷ luật và ghi chú</h5>
+      <div class="profile-form-grid">
+        ${renderProfileLine("Khen thưởng", personal.reward_record)}
+        ${renderProfileLine("Kỷ luật", personal.discipline_record)}
+        ${renderProfileLine("Ghi chú", personal.notes)}
+      </div>
+      ${renderPageNumber(3)}
     </section>
-    <footer class="profile-sheet__footer">
-      <strong>CHỮ KÝ CỦA CÔNG DÂN</strong>
-      <span>(Ký, ghi rõ họ tên)</span>
-      <strong>${escapeHtml(upperCase(item.full_name))}</strong>
-    </footer>
+    <section class="profile-page">
+      <h4>IV. CAM ĐOAN VÀ XÁC NHẬN</h4>
+      <p>Tôi xin cam đoan những lời khai trên là đúng sự thật. Nếu có điều gì khai sai, tôi xin hoàn toàn chịu trách nhiệm trước pháp luật.</p>
+      <div class="profile-signature-grid">
+        <div>
+          <strong>XÁC NHẬN CỦA ĐỊA PHƯƠNG</strong>
+          <span>(Ký, ghi rõ họ tên và đóng dấu)</span>
+        </div>
+        <div>
+          <strong>NGƯỜI KHAI</strong>
+          <span>(Ký, ghi rõ họ tên)</span>
+          <b>${escapeHtml(upperCase(item.full_name))}</b>
+        </div>
+      </div>
+      <h4>GHI CHÚ CỦA BAN CHỈ HUY QUÂN SỰ</h4>
+      <div class="profile-note-lines">${Array.from({ length: 9 }, () => "<span></span>").join("")}</div>
+      ${renderPageNumber(4)}
+    </section>
   `;
 }
 
@@ -1617,25 +1651,37 @@ function printProfileDocument(item, mode = "print") {
         <meta charset="UTF-8">
         <title>Hồ sơ NVQS</title>
         <style>
-          body { margin: 0; padding: 24px; background: #f7f1ed; font-family: "Times New Roman", serif; color: #18110d; }
-          .profile-sheet { max-width: 210mm; margin: 0 auto; background: #fffefc; padding: 24mm 18mm; box-shadow: 0 24px 60px rgba(65, 30, 18, 0.12); }
-          .profile-sheet__header, .profile-sheet__footer { text-align: center; }
-          .profile-sheet__header p { margin: 0; font-weight: 700; }
-          .profile-sheet__header h3 { margin: 18px 0 0; font-size: 28px; }
-          .profile-sheet__section { margin-top: 18px; }
-          .profile-sheet__section h4 { margin: 0 0 10px; font-size: 20px; }
-          .profile-line { display: grid; grid-template-columns: 220px 1fr; gap: 10px; padding: 4px 0; border-bottom: 1px dotted #b8a79d; }
-          .profile-line--triple { grid-template-columns: 140px 1fr 120px 1fr 90px 1fr; }
-          .profile-line--double { grid-template-columns: 180px 1fr 170px 1fr; }
-          .profile-line span:first-child, .profile-line span:nth-child(3), .profile-line span:nth-child(5) { font-weight: 700; }
-          .profile-sheet p { line-height: 1.55; margin: 0 0 10px; }
-          .profile-sheet__hint { font-style: italic; }
-          .profile-sheet__footer { margin-top: 34px; display: grid; gap: 8px; }
+          @page { size: A4; margin: 0; }
+          body { margin: 0; padding: 16px; background: #f7f1ed; font-family: "Times New Roman", serif; color: #18110d; }
+          .profile-sheet { width: 210mm; margin: 0 auto; display: grid; gap: 16px; }
+          .profile-page { position: relative; width: 210mm; min-height: 297mm; box-sizing: border-box; padding: 16mm 15mm 14mm; background: #fffefc; box-shadow: 0 16px 42px rgba(65, 30, 18, 0.12); break-after: page; page-break-after: always; }
+          .profile-page:last-child { break-after: auto; page-break-after: auto; }
+          .profile-sheet__header { text-align: center; }
+          .profile-sheet__header p { margin: 0; font-size: 15px; font-weight: 700; }
+          .profile-title { margin: 18px 0 16px; text-align: center; font-size: 26px; letter-spacing: 0.08em; }
+          .profile-page h4 { margin: 0 0 10px; font-size: 17px; }
+          .profile-page h5 { margin: 12px 0 6px; font-size: 15px; }
+          .profile-page p { line-height: 1.45; margin: 0 0 10px; }
+          .profile-sheet__hint, .profile-empty { font-style: italic; }
+          .profile-line { display: grid; grid-template-columns: 260px 1fr; gap: 10px; padding: 4px 0; border-bottom: 1px dotted #b8a79d; line-height: 1.35; font-size: 14px; }
+          .profile-line--double { grid-template-columns: 200px 1fr 150px 1fr; }
+          .profile-line--triple { grid-template-columns: 112px 1fr 100px 1fr 82px 1fr; }
+          .profile-line span:first-child, .profile-line span:nth-child(3), .profile-line span:nth-child(5) { font-weight: 700; white-space: nowrap; }
+          .profile-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 13px; line-height: 1.35; }
+          .profile-table th, .profile-table td { border: 1px solid rgba(56, 17, 13, 0.55); padding: 6px 7px; vertical-align: top; }
+          .profile-table th { text-align: center; font-weight: 700; background: #fbf0ea; }
+          .profile-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 42px; margin: 42px 0 46px; text-align: center; min-height: 160px; }
+          .profile-signature-grid div { display: grid; align-content: start; gap: 8px; }
+          .profile-signature-grid b { margin-top: 82px; }
+          .profile-note-lines { display: grid; gap: 14px; margin-top: 18px; }
+          .profile-note-lines span { border-bottom: 1px dotted rgba(56, 17, 13, 0.5); min-height: 18px; }
+          .profile-page-number { position: absolute; right: 15mm; bottom: 8mm; color: #76564c; font-size: 12px; }
           .profile-export-hint { max-width: 210mm; margin: 0 auto 16px; padding: 14px 16px; border-radius: 14px; background: #fff3d9; color: #5f3c00; font-family: Georgia, serif; }
           @media print {
             body { background: #fff; padding: 0; }
             .profile-export-hint { display: none; }
-            .profile-sheet { box-shadow: none; max-width: none; padding: 12mm 14mm; }
+            .profile-sheet { width: auto; margin: 0; display: block; }
+            .profile-page { box-shadow: none; width: 210mm; min-height: 297mm; }
           }
         </style>
       </head>
@@ -1745,6 +1791,85 @@ function renderPeopleList(items, emptyText) {
 
 function renderNarrativeParagraphs(lines) {
   return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
+}
+
+function renderProfileHeader() {
+  return `
+    <header class="profile-sheet__header">
+      <p>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+      <p>Độc lập - Tự do - Hạnh phúc</p>
+    </header>
+  `;
+}
+
+function renderPageNumber(pageNumber) {
+  return `<div class="profile-page-number">Trang ${pageNumber}/4</div>`;
+}
+
+function buildParentNarrative(label, name, dateOfBirth, occupation, status, residence) {
+  return `${label}: ${displayValue(name)}, sinh năm ${displayValue(extractYear(dateOfBirth))}, nghề nghiệp ${displayValue(occupation)}, tình trạng ${displayValue(status)}, nơi ở hiện tại ${displayValue(residence)}.`;
+}
+
+function renderProfileHistoryTable(items, emptyTitle, includeStage = false) {
+  const records = Array.isArray(items) ? items : [];
+  if (!records.length) {
+    return `<p class="profile-empty">${escapeHtml(emptyTitle)}: Chưa có dữ liệu.</p>`;
+  }
+  return `
+    <table class="profile-table">
+      <thead>
+        <tr>
+          <th>Từ năm</th>
+          <th>Đến năm</th>
+          ${includeStage ? "<th>Giai đoạn</th>" : ""}
+          <th>Nội dung</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${records.map((record) => `
+          <tr>
+            <td>${escapeHtml(displayValue(record.from_year))}</td>
+            <td>${escapeHtml(displayValue(record.to_year))}</td>
+            ${includeStage ? `<td>${escapeHtml(displayValue(record.stage_name))}</td>` : ""}
+            <td>${escapeHtml(displayValue(record.summary))}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderProfilePeopleTable(items, emptyTitle) {
+  const records = Array.isArray(items) ? items : [];
+  if (!records.length) {
+    return `<p class="profile-empty">${escapeHtml(emptyTitle)}: Chưa có dữ liệu.</p>`;
+  }
+  return `
+    <table class="profile-table profile-table--people">
+      <thead>
+        <tr>
+          <th>STT</th>
+          <th>Họ tên</th>
+          <th>Quan hệ</th>
+          <th>Năm sinh</th>
+          <th>Nghề nghiệp / nơi học tập</th>
+          <th>Nơi ở hiện tại</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${records.map((record, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${escapeHtml(displayValue(record.full_name))}</td>
+            <td>${escapeHtml(displayValue(record.relation))}</td>
+            <td>${escapeHtml(displayValue(extractYear(record.date_of_birth)))}</td>
+            <td>${escapeHtml(displayValue(record.occupation || record.workplace))}</td>
+            <td>${escapeHtml(displayValue(record.current_residence))}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 function renderProfileLine(label, value) {

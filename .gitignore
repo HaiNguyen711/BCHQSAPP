@@ -19,6 +19,7 @@ data/*.stdout.log
 data/*.stderr.log
 
 tools/
+tmp/
 deploy/cloudflared-config.yml
 deploy/runtime.env.ps1
 
