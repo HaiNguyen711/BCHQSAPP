@@ -12,7 +12,7 @@
         { "id": "gender", "label": "Giới tính", "type": "select", "required": true, "options": ["Nam", "Nữ"] },
         { "id": "citizen_id_number", "label": "Số căn cước công dân", "type": "text", "required": true },
         { "id": "phone", "label": "Số điện thoại cá nhân", "type": "tel", "required": true },
-        { "id": "birth_registration_place", "label": "Nơi đăng ký khai sinh", "type": "text", "required": true },
+        { "id": "birth_registration_place", "label": "Nơi đăng ký khai sinh", "type": "text", "required": false },
         { "id": "street_address", "label": "Địa chỉ, số nhà", "type": "text", "required": true },
         {
           "id": "neighborhood",
@@ -73,8 +73,8 @@
         },
         { "id": "ward", "label": "Phường", "type": "text", "required": true, "default": "Trấn Biên" },
         { "id": "province", "label": "Tỉnh/Thành phố", "type": "text", "required": true, "default": "Đồng Nai" },
-        { "id": "family_permanent_residence", "label": "Nơi thường trú của gia đình", "type": "textarea", "required": true },
-        { "id": "current_residence", "label": "Nơi ở hiện tại", "type": "textarea", "required": true },
+        { "id": "family_permanent_residence", "label": "Nơi thường trú của gia đình", "type": "text", "required": true },
+        { "id": "current_residence", "label": "Nơi ở hiện tại", "type": "text", "required": true },
         { "id": "hometown", "label": "Quê quán", "type": "text", "required": true },
         { "id": "ethnicity", "label": "Dân tộc", "type": "text", "required": true },
         { "id": "religion", "label": "Tôn giáo", "type": "text", "required": true },
@@ -89,18 +89,18 @@
           "required": true,
           "options": ["Không", "Trung cấp", "Cao đẳng", "Đại học", "Sau đại học"]
         },
-        { "id": "major", "label": "Chuyên ngành đào tạo", "type": "text", "required": true },
-        { "id": "foreign_language", "label": "Trình độ ngoại ngữ", "type": "text", "required": true },
-        { "id": "occupation", "label": "Nghề nghiệp hiện tại", "type": "text", "required": true },
+        { "id": "major", "label": "Chuyên ngành đào tạo", "type": "text", "required": false },
+        { "id": "foreign_language", "label": "Trình độ ngoại ngữ", "type": "text", "required": false },
+        { "id": "occupation", "label": "Nghề nghiệp hiện tại", "type": "text", "required": false },
         { "id": "salary_grade", "label": "Lương ngạch", "type": "text", "required": false },
         { "id": "salary_step", "label": "Bậc lương", "type": "text", "required": false },
         { "id": "workplace", "label": "Nơi làm việc", "type": "text", "required": true },
         { "id": "youth_union_join_date", "label": "Ngày vào Đoàn", "type": "date", "required": false },
         { "id": "party_join_date", "label": "Ngày vào Đảng", "type": "date", "required": false },
         { "id": "party_official_date", "label": "Ngày chính thức vào Đảng", "type": "date", "required": false },
-        { "id": "reward_record", "label": "Khen thưởng", "type": "textarea", "required": false },
-        { "id": "discipline_record", "label": "Kỷ luật", "type": "textarea", "required": false },
-        { "id": "abroad_history", "label": "Đã đi nước ngoài (tên nước, thời gian, lý do)", "type": "textarea", "required": true }
+        { "id": "reward_record", "label": "Khen thưởng", "type": "text", "required": false },
+        { "id": "discipline_record", "label": "Kỷ luật", "type": "text", "required": false },
+        { "id": "abroad_history", "label": "Đã đi nước ngoài (tên nước, thời gian, lý do)", "type": "text", "required": true }
       ]
     },
     {
