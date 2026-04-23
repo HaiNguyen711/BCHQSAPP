@@ -1563,33 +1563,33 @@ function buildProfileDocumentMarkup(item) {
       ${renderRuledParagraphs(buildFamilyNarratives(item), 28)}
       ${renderPageNumber(2)}
     </section>
-    <section class="profile-page">
+    <section class="profile-page profile-page--stacked">
       <h4>III. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ, QUÁ TRÌNH CÔNG TÁC CỦA BẢN THÂN</h4>
       <p class="profile-sheet__hint">(Nêu thời gian, kết quả học tập, rèn luyện phấn đấu từ nhỏ đến thời điểm nhập ngũ)</p>
-      ${renderRuledParagraphs(buildSelfNarratives(item), 8)}
+      ${renderRuledParagraphs(buildSelfNarratives(item), 7)}
       <div class="profile-signature profile-signature--right">
         <strong>NGƯỜI KHAI</strong>
         <span>(Ký ghi rõ họ tên)</span>
         <b>${escapeHtml(upperCase(item.full_name))}</b>
       </div>
-      ${renderPageNumber(3)}
-    </section>
-    <section class="profile-page">
       <h4>IV. NHẬN XÉT VÀ KẾT LUẬN CỦA CÔNG AN CẤP XÃ</h4>
       <p class="profile-sheet__hint">(Nhận xét, kết luận về tiêu chuẩn chính trị đối với bản thân và tình hình chính trị của gia đình đến thời điểm nhập ngũ)</p>
       ${renderRuledParagraphs([], 7)}
-      <div class="profile-signature profile-signature--right">
+      <div class="profile-signature profile-signature--right profile-signature--compact">
         <span>Ngày.........tháng....... năm 20……</span>
         <strong>TRƯỞNG CÔNG AN</strong>
       </div>
+      ${renderPageNumber(3)}
+    </section>
+    <section class="profile-page profile-page--stacked">
       <h4>V. KẾT LUẬN CỦA BAN CHỈ HUY QUÂN SỰ CẤP XÃ (HOẶC CƠ QUAN, TỔ CHỨC)</h4>
-      ${renderRuledParagraphs([], 5)}
+      ${renderRuledParagraphs([], 10)}
       <div class="profile-signature profile-signature--right profile-signature--compact">
         <span>Ngày......... tháng.......năm 20........</span>
         <strong>CHỈ HUY TRƯỞNG</strong>
       </div>
       <h4>VI. KẾT LUẬN CỦA HỘI ĐỒNG NVQS CẤP XÃ TRƯỚC KHI CÔNG DÂN NHẬP NGŨ</h4>
-      ${renderRuledParagraphs([], 4)}
+      ${renderRuledParagraphs([], 10)}
       <div class="profile-signature profile-signature--right profile-signature--compact">
         <span>Ngày......... tháng....... năm 20.....</span>
         <strong>TM. HỘI ĐỒNG NGHĨA VỤ QUÂN SỰ</strong>
@@ -1684,16 +1684,23 @@ function printProfileDocument(item, mode = "print") {
           .profile-page h5 { margin: 12px 0 6px; font-size: 15px; }
           .profile-page p { line-height: 1.45; margin: 0 0 10px; }
           .profile-sheet__hint, .profile-empty { font-style: italic; }
-          .profile-line { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; padding: 4px 0; line-height: 1.35; font-size: 14px; }
-          .profile-line--double { grid-template-columns: 190px minmax(0, 1fr) 140px minmax(0, 1fr); }
-          .profile-line--triple { grid-template-columns: 104px minmax(0, 1fr) 92px minmax(0, 1fr) 78px minmax(0, 1fr); }
-          .profile-line span:first-child, .profile-line span:nth-child(3), .profile-line span:nth-child(5) { font-weight: 700; white-space: nowrap; }
+          .profile-line { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 10px; align-items: baseline; min-height: 22px; padding: 3px 0; line-height: 1.25; font-size: 13px; }
+          .profile-line--wide-label { grid-template-columns: 330px minmax(0, 1fr); }
+          .profile-line--double { grid-template-columns: 145px minmax(0, 1fr) 105px minmax(0, 1fr); gap: 8px; }
+          .profile-line--triple { grid-template-columns: 80px minmax(0, 1fr) 72px minmax(0, 1fr) 70px minmax(0, 1fr); gap: 8px; }
+          .profile-label { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+          .profile-value { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: clip; }
           .profile-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 13px; line-height: 1.35; }
           .profile-table th, .profile-table td { border: 1px solid rgba(56, 17, 13, 0.55); padding: 6px 7px; vertical-align: top; }
           .profile-table th { text-align: center; font-weight: 700; background: #fbf0ea; }
           .profile-ruled-lines { display: grid; gap: 0; }
           .profile-ruled-lines p { min-height: 23px; margin: 0; border-bottom: 1px dotted rgba(56, 17, 13, 0.55); line-height: 1.45; }
           .profile-signature { display: grid; gap: 6px; margin-top: 26px; text-align: center; }
+          .profile-page--stacked h4 { margin-top: 8px; }
+          .profile-page--stacked h4:first-child { margin-top: 0; }
+          .profile-page--stacked .profile-ruled-lines p { min-height: 20px; }
+          .profile-page--stacked .profile-signature { margin-top: 12px; }
+          .profile-page--stacked .profile-signature b { margin-top: 34px; }
           .profile-signature--right { width: 48%; margin-left: auto; }
           .profile-signature--compact { margin-top: 14px; }
           .profile-signature b { margin-top: 56px; }
@@ -1912,14 +1919,15 @@ function renderProfilePeopleTable(items, emptyTitle) {
 }
 
 function renderProfileLine(label, value) {
-  return `<div class="profile-line"><span>${escapeHtml(label)}</span><span>${escapeHtml(displayValue(value))}</span></div>`;
+  const className = label.length > 34 ? "profile-line profile-line--wide-label" : "profile-line";
+  return `<div class="${className}"><span class="profile-label">${escapeHtml(label)}</span><span class="profile-value">${escapeHtml(displayValue(value))}</span></div>`;
 }
 
 function renderProfileDoubleLine(labelA, valueA, labelB, valueB) {
   return `
     <div class="profile-line profile-line--double">
-      <span>${escapeHtml(labelA)}</span><span>${escapeHtml(displayValue(valueA))}</span>
-      <span>${escapeHtml(labelB)}</span><span>${escapeHtml(displayValue(valueB))}</span>
+      <span class="profile-label">${escapeHtml(labelA)}</span><span class="profile-value">${escapeHtml(displayValue(valueA))}</span>
+      <span class="profile-label">${escapeHtml(labelB)}</span><span class="profile-value">${escapeHtml(displayValue(valueB))}</span>
     </div>
   `;
 }
@@ -1927,9 +1935,9 @@ function renderProfileDoubleLine(labelA, valueA, labelB, valueB) {
 function renderProfileTripleLine(labelA, valueA, labelB, valueB, labelC, valueC) {
   return `
     <div class="profile-line profile-line--triple">
-      <span>${escapeHtml(labelA)}</span><span>${escapeHtml(displayValue(valueA))}</span>
-      <span>${escapeHtml(labelB)}</span><span>${escapeHtml(displayValue(valueB))}</span>
-      <span>${escapeHtml(labelC)}</span><span>${escapeHtml(displayValue(valueC))}</span>
+      <span class="profile-label">${escapeHtml(labelA)}</span><span class="profile-value">${escapeHtml(displayValue(valueA))}</span>
+      <span class="profile-label">${escapeHtml(labelB)}</span><span class="profile-value">${escapeHtml(displayValue(valueB))}</span>
+      <span class="profile-label">${escapeHtml(labelC)}</span><span class="profile-value">${escapeHtml(displayValue(valueC))}</span>
     </div>
   `;
 }

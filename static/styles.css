@@ -1526,26 +1526,41 @@ pre {
 
 .profile-line {
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: 16px;
-  padding: 4px 0;
-  line-height: 1.35;
-  font-size: 14px;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+  min-height: 22px;
+  padding: 3px 0;
+  line-height: 1.25;
+  font-size: 13px;
+}
+
+.profile-line--wide-label {
+  grid-template-columns: 330px minmax(0, 1fr);
 }
 
 .profile-line--double {
-  grid-template-columns: 190px minmax(0, 1fr) 140px minmax(0, 1fr);
+  grid-template-columns: 145px minmax(0, 1fr) 105px minmax(0, 1fr);
+  gap: 8px;
 }
 
 .profile-line--triple {
-  grid-template-columns: 104px minmax(0, 1fr) 92px minmax(0, 1fr) 78px minmax(0, 1fr);
+  grid-template-columns: 80px minmax(0, 1fr) 72px minmax(0, 1fr) 70px minmax(0, 1fr);
+  gap: 8px;
 }
 
-.profile-line span:first-child,
-.profile-line span:nth-child(3),
-.profile-line span:nth-child(5) {
+.profile-label {
   font-weight: 700;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.profile-value {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
 }
 
 .profile-table {
@@ -1598,6 +1613,26 @@ pre {
   gap: 6px;
   margin-top: 26px;
   text-align: center;
+}
+
+.profile-page--stacked h4 {
+  margin-top: 8px;
+}
+
+.profile-page--stacked h4:first-child {
+  margin-top: 0;
+}
+
+.profile-page--stacked .profile-ruled-lines p {
+  min-height: 20px;
+}
+
+.profile-page--stacked .profile-signature {
+  margin-top: 12px;
+}
+
+.profile-page--stacked .profile-signature b {
+  margin-top: 34px;
 }
 
 .profile-signature--right {
