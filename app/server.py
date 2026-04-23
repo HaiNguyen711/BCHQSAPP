@@ -4,11 +4,12 @@ import hashlib
 import hmac
 import json
 import mimetypes
+import re
+import unicodedata
 from http import HTTPStatus
 from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
-import re
 
 from .config import (
     ADMIN_TOKEN,
@@ -428,7 +429,9 @@ class AppHandler(BaseHTTPRequestHandler):
         self.wfile.write(content)
 
     def _slugify_filename(self, value: str) -> str:
-        slug = re.sub(r"[^\w\-]+", "-", value.strip().lower(), flags=re.UNICODE)
+        normalized = unicodedata.normalize("NFKD", value.strip().lower())
+        ascii_value = normalized.encode("ascii", "ignore").decode("ascii")
+        slug = re.sub(r"[^a-z0-9\-]+", "-", ascii_value)
         slug = slug.strip("-")
         return slug or "ho-so"
 
