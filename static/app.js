@@ -1628,7 +1628,7 @@ function buildFamilyNarratives(item) {
     narratives.push(`Vợ/chồng: ${displayValue(marital.spouse_name)}, sinh năm ${displayValue(extractYear(marital.spouse_date_of_birth))}, nghề nghiệp ${displayValue(marital.spouse_occupation)}, nơi ở hiện tại ${displayValue(marital.spouse_current_residence)}. ${displayValue(marital.spouse_notes)}`);
   }
   siblings.forEach((sibling, index) => {
-    narratives.push(`Anh/chị/em ${index + 1}: ${displayValue(sibling.full_name)}, ${displayValue(sibling.relation)}, sinh năm ${displayValue(extractYear(sibling.date_of_birth))}, nghề nghiệp ${displayValue(sibling.occupation)}, nơi học tập/làm việc ${displayValue(sibling.workplace)}, nơi ở hiện tại ${displayValue(sibling.current_residence)}. ${displayValue(sibling.notes)}`);
+    narratives.push(`${formatSiblingPrefix(sibling, index)}, sinh năm ${displayValue(extractYear(sibling.date_of_birth))}, nghề nghiệp ${displayValue(sibling.occupation)}, nơi học tập/làm việc ${displayValue(sibling.workplace)}, nơi ở hiện tại ${displayValue(sibling.current_residence)}. ${displayValue(sibling.notes)}`);
   });
   children.forEach((child, index) => {
     narratives.push(`Con ${index + 1}: ${displayValue(child.full_name)}, sinh năm ${displayValue(extractYear(child.date_of_birth))}, học tập/nghề nghiệp ${displayValue(child.occupation)}, nơi ở hiện tại ${displayValue(child.current_residence)}. ${displayValue(child.notes)}`);
@@ -1637,6 +1637,15 @@ function buildFamilyNarratives(item) {
     narratives.push(`Ghi chú thêm về tình hình gia đình: ${displayValue(family.family_notes)}.`);
   }
   return narratives;
+}
+
+function formatSiblingPrefix(sibling, index) {
+  const relation = String(sibling.relation || "").trim();
+  const fullName = displayValue(sibling.full_name);
+  if (relation) {
+    return `${relation} ${fullName}`;
+  }
+  return `Anh/chị/em ${index + 1}: ${fullName}`;
 }
 
 function buildSelfNarratives(item) {
