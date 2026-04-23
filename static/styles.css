@@ -1529,7 +1529,6 @@ pre {
   grid-template-columns: 360px minmax(0, 1fr);
   gap: 16px;
   padding: 4px 0;
-  border-bottom: 1px dotted rgba(93, 50, 36, 0.38);
   line-height: 1.35;
   font-size: 14px;
 }
