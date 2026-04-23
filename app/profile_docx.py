@@ -42,7 +42,7 @@ def _fill_profile_page(
 ) -> None:
     replacements = {
         "Họ, chữ đệm và tên khai sinh": "Họ, chữ đệm và tên khai sinh (viết chữ in hoa):\t{value}".format(
-            value=_upper(personal.get("birth_name") or submission.get("full_name"))
+            value=_upper(submission.get("full_name"))
         ),
         "Họ, chữ đệm và tên thường dùng": "Họ, chữ đệm và tên thường dùng: {value}".format(
             value=_value(submission.get("full_name"))

@@ -516,10 +516,15 @@ function syncCurrentResidence() {
     .filter(Boolean);
 
   personal.current_residence = addressParts.join(", ");
+  personal.family_permanent_residence = personal.current_residence;
 
   const residenceField = document.querySelector('[data-field-key="personal_basic.current_residence"]');
   if (residenceField) {
     residenceField.value = personal.current_residence;
+  }
+  const familyResidenceField = document.querySelector('[data-field-key="personal_basic.family_permanent_residence"]');
+  if (familyResidenceField) {
+    familyResidenceField.value = personal.family_permanent_residence;
   }
 }
 
@@ -534,6 +539,7 @@ function syncCurrentResidenceFromDom() {
   const wardField = document.querySelector('[data-field-key="personal_basic.ward"]');
   const provinceField = document.querySelector('[data-field-key="personal_basic.province"]');
   const residenceField = document.querySelector('[data-field-key="personal_basic.current_residence"]');
+  const familyResidenceField = document.querySelector('[data-field-key="personal_basic.family_permanent_residence"]');
 
   const addressParts = [
     streetField?.value || personal.street_address,
@@ -546,9 +552,13 @@ function syncCurrentResidenceFromDom() {
 
   const nextResidence = addressParts.join(", ");
   personal.current_residence = nextResidence;
+  personal.family_permanent_residence = nextResidence;
 
   if (residenceField) {
     residenceField.value = nextResidence;
+  }
+  if (familyResidenceField) {
+    familyResidenceField.value = nextResidence;
   }
 }
 
@@ -1518,7 +1528,7 @@ function buildProfileDocumentMarkup(item) {
       <h3 class="profile-title">LÝ LỊCH NGHĨA VỤ QUÂN SỰ</h3>
       <h4>I. SƠ YẾU LÝ LỊCH</h4>
       <div class="profile-form-grid">
-        ${renderProfileLine("Họ, chữ đệm và tên khai sinh (viết chữ in hoa)", upperCase(personal.birth_name || item.full_name))}
+        ${renderProfileLine("Họ, chữ đệm và tên khai sinh (viết chữ in hoa)", upperCase(item.full_name))}
         ${renderProfileLine("Họ, chữ đệm và tên thường dùng", item.full_name)}
         ${renderProfileDoubleLine("Sinh ngày", personal.date_of_birth, "Giới tính", personal.gender)}
         ${renderProfileLine("Số thẻ căn cước/CCCD", item.citizen_id_number)}
