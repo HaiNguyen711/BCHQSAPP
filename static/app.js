@@ -1511,27 +1511,32 @@ function buildProfileDocumentMarkup(item) {
   return `
     <section class="profile-page">
       ${renderProfileHeader()}
+      <div class="profile-template-meta">
+        <span>Biểu số 09/GNN-2025</span>
+        <span>Khổ biểu 29,7 x 42 cm</span>
+      </div>
       <h3 class="profile-title">LÝ LỊCH NGHĨA VỤ QUÂN SỰ</h3>
       <h4>I. SƠ YẾU LÝ LỊCH</h4>
       <div class="profile-form-grid">
-        ${renderProfileLine("Họ, chữ đệm và tên thường dùng", upperCase(item.full_name))}
-        ${renderProfileLine("Họ, chữ đệm và tên khai sinh", personal.birth_name || item.full_name)}
+        ${renderProfileLine("Họ, chữ đệm và tên khai sinh (viết chữ in hoa)", upperCase(personal.birth_name || item.full_name))}
+        ${renderProfileLine("Họ, chữ đệm và tên thường dùng", item.full_name)}
         ${renderProfileDoubleLine("Sinh ngày", personal.date_of_birth, "Giới tính", personal.gender)}
-        ${renderProfileLine("Số thẻ Căn cước công dân", item.citizen_id_number)}
+        ${renderProfileLine("Số thẻ căn cước/CCCD", item.citizen_id_number)}
         ${renderProfileLine("Nơi đăng ký khai sinh", personal.birth_registration_place)}
         ${renderProfileLine("Quê quán", personal.hometown)}
         ${renderProfileTripleLine("Dân tộc", personal.ethnicity, "Tôn giáo", personal.religion, "Quốc tịch", personal.nationality)}
         ${renderProfileLine("Nơi thường trú của gia đình", personal.family_permanent_residence)}
         ${renderProfileLine("Nơi ở hiện tại của bản thân", personal.current_residence || personal.street_address)}
         ${renderProfileDoubleLine("Thành phần gia đình", personal.family_background, "Bản thân", personal.personal_background)}
-        ${renderProfileDoubleLine("Trình độ văn hóa", personal.education_level, "Năm tốt nghiệp", personal.graduation_year)}
-        ${renderProfileDoubleLine("Ngành, nghề đào tạo", personal.major, "Trình độ đào tạo", personal.training_level)}
-        ${renderProfileLine("Trình độ ngoại ngữ", personal.foreign_language)}
+        ${renderProfileLine("Trình độ giáo dục phổ thông", personal.education_level)}
+        ${renderProfileDoubleLine("Trình độ đào tạo", personal.training_level, "Ngoại ngữ", personal.foreign_language)}
+        ${renderProfileLine("Chuyên ngành đào tạo", personal.major)}
         ${renderProfileDoubleLine("Ngày vào Đảng CSVN", personal.party_join_date, "Chính thức", personal.party_official_date)}
         ${renderProfileLine("Ngày vào Đoàn TNCS Hồ Chí Minh", personal.youth_union_join_date)}
         ${renderProfileDoubleLine("Khen thưởng", personal.reward_record, "Kỷ luật", personal.discipline_record)}
         ${renderProfileTripleLine("Nghề nghiệp", personal.occupation, "Lương ngạch", personal.salary_grade, "Bậc", personal.salary_step)}
         ${renderProfileLine("Nơi làm việc (học tập)", personal.workplace)}
+        ${renderProfileLine("Đã đi nước ngoài (tên nước, thời gian, lý do)", personal.abroad_history)}
         ${renderProfileDoubleLine("Họ tên cha", family.father_name, "Tình trạng", family.father_status)}
         ${renderProfileDoubleLine("Sinh năm cha", extractYear(family.father_date_of_birth), "Nghề nghiệp cha", family.father_occupation)}
         ${renderProfileDoubleLine("Họ tên mẹ", family.mother_name, "Tình trạng", family.mother_status)}
@@ -1544,47 +1549,41 @@ function buildProfileDocumentMarkup(item) {
     </section>
     <section class="profile-page">
       <h4>II. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ CỦA GIA ĐÌNH</h4>
-      <h5>1. Cha</h5>
-      ${renderNarrativeParagraphs([buildParentNarrative("Cha", family.father_name, family.father_date_of_birth, family.father_occupation, family.father_status, family.father_current_residence)])}
-      ${renderProfileHistoryTable(fatherHistory, "Quá trình của cha")}
-      <h5>2. Mẹ</h5>
-      ${renderNarrativeParagraphs([buildParentNarrative("Mẹ", family.mother_name, family.mother_date_of_birth, family.mother_occupation, family.mother_status, family.mother_current_residence)])}
-      ${renderProfileHistoryTable(motherHistory, "Quá trình của mẹ")}
-      <h5>3. Vợ/chồng và con</h5>
-      ${renderNarrativeParagraphs(marital.spouse_name ? [`Vợ/chồng: ${displayValue(marital.spouse_name)}, sinh năm ${displayValue(extractYear(marital.spouse_date_of_birth))}, nghề nghiệp ${displayValue(marital.spouse_occupation)}, nơi ở hiện tại ${displayValue(marital.spouse_current_residence)}. ${displayValue(marital.spouse_notes)}`] : ["Chưa khai thông tin vợ/chồng."])}
-      ${renderProfilePeopleTable(children, "Thông tin con")}
-      <h5>4. Anh, chị, em ruột</h5>
-      ${renderProfilePeopleTable(siblings, "Thông tin anh, chị, em")}
+      <p class="profile-sheet__hint">(Của cha đẻ, mẹ đẻ hoặc người trực tiếp nuôi dưỡng của bản thân và của vợ hoặc chồng; anh chị em ruột; con đẻ, con nuôi theo quy định của pháp luật; nghề nghiệp, tình hình kinh tế, chính trị của từng người qua các thời kỳ).</p>
+      ${renderRuledParagraphs(buildFamilyNarratives(item), 28)}
       ${renderPageNumber(2)}
     </section>
     <section class="profile-page">
       <h4>III. TÌNH HÌNH KINH TẾ, CHÍNH TRỊ, QUÁ TRÌNH CÔNG TÁC CỦA BẢN THÂN</h4>
       <p class="profile-sheet__hint">(Nêu thời gian, kết quả học tập, rèn luyện phấn đấu từ nhỏ đến thời điểm nhập ngũ)</p>
-      ${renderProfileHistoryTable(personalHistory, "Quá trình bản thân", true)}
-      <h5>Khen thưởng, kỷ luật và ghi chú</h5>
-      <div class="profile-form-grid">
-        ${renderProfileLine("Khen thưởng", personal.reward_record)}
-        ${renderProfileLine("Kỷ luật", personal.discipline_record)}
-        ${renderProfileLine("Ghi chú", personal.notes)}
+      ${renderRuledParagraphs(buildSelfNarratives(item), 8)}
+      <div class="profile-signature profile-signature--right">
+        <strong>NGƯỜI KHAI</strong>
+        <span>(Ký ghi rõ họ tên)</span>
+        <b>${escapeHtml(upperCase(item.full_name))}</b>
       </div>
       ${renderPageNumber(3)}
     </section>
     <section class="profile-page">
-      <h4>IV. CAM ĐOAN VÀ XÁC NHẬN</h4>
-      <p>Tôi xin cam đoan những lời khai trên là đúng sự thật. Nếu có điều gì khai sai, tôi xin hoàn toàn chịu trách nhiệm trước pháp luật.</p>
-      <div class="profile-signature-grid">
-        <div>
-          <strong>XÁC NHẬN CỦA ĐỊA PHƯƠNG</strong>
-          <span>(Ký, ghi rõ họ tên và đóng dấu)</span>
-        </div>
-        <div>
-          <strong>NGƯỜI KHAI</strong>
-          <span>(Ký, ghi rõ họ tên)</span>
-          <b>${escapeHtml(upperCase(item.full_name))}</b>
-        </div>
+      <h4>IV. NHẬN XÉT VÀ KẾT LUẬN CỦA CÔNG AN CẤP XÃ</h4>
+      <p class="profile-sheet__hint">(Nhận xét, kết luận về tiêu chuẩn chính trị đối với bản thân và tình hình chính trị của gia đình đến thời điểm nhập ngũ)</p>
+      ${renderRuledParagraphs([], 7)}
+      <div class="profile-signature profile-signature--right">
+        <span>Ngày.........tháng....... năm 20……</span>
+        <strong>TRƯỞNG CÔNG AN</strong>
       </div>
-      <h4>GHI CHÚ CỦA BAN CHỈ HUY QUÂN SỰ</h4>
-      <div class="profile-note-lines">${Array.from({ length: 9 }, () => "<span></span>").join("")}</div>
+      <h4>V. KẾT LUẬN CỦA BAN CHỈ HUY QUÂN SỰ CẤP XÃ (HOẶC CƠ QUAN, TỔ CHỨC)</h4>
+      ${renderRuledParagraphs([], 5)}
+      <div class="profile-signature profile-signature--right profile-signature--compact">
+        <span>Ngày......... tháng.......năm 20........</span>
+        <strong>CHỈ HUY TRƯỞNG</strong>
+      </div>
+      <h4>VI. KẾT LUẬN CỦA HỘI ĐỒNG NVQS CẤP XÃ TRƯỚC KHI CÔNG DÂN NHẬP NGŨ</h4>
+      ${renderRuledParagraphs([], 4)}
+      <div class="profile-signature profile-signature--right profile-signature--compact">
+        <span>Ngày......... tháng....... năm 20.....</span>
+        <strong>TM. HỘI ĐỒNG NGHĨA VỤ QUÂN SỰ</strong>
+      </div>
       ${renderPageNumber(4)}
     </section>
   `;
@@ -1658,6 +1657,7 @@ function printProfileDocument(item, mode = "print") {
           .profile-page:last-child { break-after: auto; page-break-after: auto; }
           .profile-sheet__header { text-align: center; }
           .profile-sheet__header p { margin: 0; font-size: 15px; font-weight: 700; }
+          .profile-template-meta { display: grid; justify-items: end; gap: 2px; margin-top: 8px; color: #2c1711; font-size: 13px; }
           .profile-title { margin: 18px 0 16px; text-align: center; font-size: 26px; letter-spacing: 0.08em; }
           .profile-page h4 { margin: 0 0 10px; font-size: 17px; }
           .profile-page h5 { margin: 12px 0 6px; font-size: 15px; }
@@ -1670,6 +1670,12 @@ function printProfileDocument(item, mode = "print") {
           .profile-table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 13px; line-height: 1.35; }
           .profile-table th, .profile-table td { border: 1px solid rgba(56, 17, 13, 0.55); padding: 6px 7px; vertical-align: top; }
           .profile-table th { text-align: center; font-weight: 700; background: #fbf0ea; }
+          .profile-ruled-lines { display: grid; gap: 0; }
+          .profile-ruled-lines p { min-height: 23px; margin: 0; border-bottom: 1px dotted rgba(56, 17, 13, 0.55); line-height: 1.45; }
+          .profile-signature { display: grid; gap: 6px; margin-top: 26px; text-align: center; }
+          .profile-signature--right { width: 48%; margin-left: auto; }
+          .profile-signature--compact { margin-top: 14px; }
+          .profile-signature b { margin-top: 56px; }
           .profile-signature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 42px; margin: 42px 0 46px; text-align: center; min-height: 160px; }
           .profile-signature-grid div { display: grid; align-content: start; gap: 8px; }
           .profile-signature-grid b { margin-top: 82px; }
@@ -1791,6 +1797,18 @@ function renderPeopleList(items, emptyText) {
 
 function renderNarrativeParagraphs(lines) {
   return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
+}
+
+function renderRuledParagraphs(lines, minLines) {
+  const visibleLines = lines.filter((line) => String(line || "").trim() !== "");
+  const total = Math.max(minLines, visibleLines.length);
+  return `
+    <div class="profile-ruled-lines">
+      ${Array.from({ length: total }, (_, index) => `
+        <p>${escapeHtml(visibleLines[index] || "")}</p>
+      `).join("")}
+    </div>
+  `;
 }
 
 function renderProfileHeader() {
