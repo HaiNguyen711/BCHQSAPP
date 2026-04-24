@@ -13,7 +13,7 @@
         { "id": "citizen_id_number", "label": "Số căn cước công dân", "type": "text", "required": true },
         { "id": "phone", "label": "Số điện thoại cá nhân", "type": "tel", "required": true },
         { "id": "birth_registration_place", "label": "Nơi đăng ký khai sinh", "type": "text", "required": false },
-        { "id": "street_address", "label": "Địa chỉ, số nhà", "type": "text", "required": true },
+        { "id": "street_address", "label": "Số nhà, tên đường", "type": "text", "required": true },
         {
           "id": "neighborhood",
           "label": "Khu phố",
