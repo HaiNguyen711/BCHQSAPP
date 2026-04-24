@@ -88,8 +88,21 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+window.addEventListener("load", () => {
+  if (document.body.dataset.page === "form") {
+    closeReviewModal();
+  }
+});
+
+window.addEventListener("pageshow", () => {
+  if (document.body.dataset.page === "form") {
+    closeReviewModal();
+  }
+});
+
 async function bootFormPage() {
   state.formOptions = Array.isArray(window.APP_BOOTSTRAP?.formOptions) ? window.APP_BOOTSTRAP.formOptions : [];
+  closeReviewModal();
 
   const response = await fetch("/api/form-schema?v=20260421-2", { cache: "no-store" });
   state.schema = await response.json();
@@ -736,9 +749,13 @@ function closeReviewModal() {
   modal.hidden = true;
   modal.style.display = "none";
   document.body.classList.remove("review-modal-open");
-  reviewMessageEl.textContent = "";
-  reviewMessageEl.className = "form-message form-message--sheet";
-  content.innerHTML = "";
+  if (reviewMessageEl) {
+    reviewMessageEl.textContent = "";
+    reviewMessageEl.className = "form-message form-message--sheet";
+  }
+  if (content) {
+    content.innerHTML = "";
+  }
   state.reviewModalOpen = false;
 }
 
