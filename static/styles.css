@@ -1307,6 +1307,88 @@ pre {
   display: block;
 }
 
+.review-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(56, 17, 13, 0.58);
+}
+
+.review-modal__dialog {
+  width: min(92vw, 1360px);
+  max-height: min(92vh, 1180px);
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: linear-gradient(180deg, #fff9f7 0%, #fff5f1 100%);
+  box-shadow: 0 24px 56px rgba(61, 21, 16, 0.24);
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.review-modal__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 16px;
+  align-items: start;
+  padding: 28px 30px 20px;
+  border-bottom: 1px solid rgba(130, 60, 42, 0.12);
+}
+
+.review-modal__heading {
+  display: grid;
+  gap: 6px;
+}
+
+.review-modal__eyebrow {
+  color: var(--primary-strong);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.review-modal__header h2 {
+  margin: 0;
+  color: #34120f;
+  font-size: clamp(26px, 3vw, 38px);
+}
+
+.review-modal__subtitle {
+  margin: 0;
+  color: var(--muted);
+}
+
+.review-modal__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.review-modal__close {
+  min-width: 160px;
+}
+
+.review-modal__body {
+  overflow: auto;
+  padding: 20px 30px 30px;
+}
+
+.review-modal__body .form-message--sheet {
+  padding: 0 0 14px;
+}
+
+.review-modal__body > .detail-grid + .detail-grid {
+  margin-top: 18px;
+}
+
+body.review-modal-open {
+  overflow: hidden;
+}
+
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2042,6 +2124,25 @@ body.admin-modal-open {
   }
 
   .admin-modal__body {
+    padding: 18px;
+  }
+
+  .review-modal {
+    padding: 12px;
+  }
+
+  .review-modal__dialog {
+    width: 100%;
+    max-height: 94vh;
+    border-radius: 24px;
+  }
+
+  .review-modal__header {
+    grid-template-columns: 1fr;
+    padding: 18px 18px 14px;
+  }
+
+  .review-modal__body {
     padding: 18px;
   }
 

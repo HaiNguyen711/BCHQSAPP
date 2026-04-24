@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mục thu thập thông tin BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260423-profile-template-13">
+  <link rel="stylesheet" href="/static/styles.css?v=20260424-profile-template-14">
 </head>
 <body data-page="form">
   <main class="shell shell--landing">
@@ -74,6 +74,26 @@
       <p id="formMessage" class="form-message form-message--sheet" aria-live="polite"></p>
     </section>
 
+    <section id="reviewModal" class="review-modal" hidden>
+      <div class="review-modal__dialog">
+        <div class="review-modal__header">
+          <div class="review-modal__heading">
+            <div class="review-modal__eyebrow">Xem lại trước khi gửi</div>
+            <h2 id="reviewModalTitle">Xem lại thông tin</h2>
+            <p id="reviewModalSubtitle" class="review-modal__subtitle">Kiểm tra kỹ toàn bộ thông tin đã nhập trước khi xác nhận gửi lên hệ thống.</p>
+          </div>
+          <div class="review-modal__actions">
+            <button id="reviewConfirmBtn" type="button" class="primary-btn">Xác nhận gửi</button>
+          </div>
+          <button id="reviewCloseBtn" type="button" class="ghost-btn review-modal__close">Quay lại chỉnh sửa</button>
+        </div>
+        <div class="review-modal__body">
+          <p id="reviewModalMessage" class="form-message form-message--sheet" aria-live="polite"></p>
+          <div id="reviewModalContent"></div>
+        </div>
+      </div>
+    </section>
+
     <section class="contact-card">
       <div class="contact-card__header">
         <h2>Thông tin liên hệ BCHQS</h2>
@@ -105,6 +125,6 @@
       formOptions: {{ FORM_OPTIONS_JSON }}
     };
   </script>
-  <script src="/static/app.js?v=20260423-profile-template-13"></script>
+  <script src="/static/app.js?v=20260424-profile-template-14"></script>
 </body>
 </html>

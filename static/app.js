@@ -11,6 +11,8 @@ const state = {
   currentAdminModalItem: null,
   currentAdminModalMode: "",
   currentAdminModalTab: "personal",
+  reviewModalOpen: false,
+  isSubmitting: false,
 };
 
 window.state = state;
@@ -126,7 +128,11 @@ function wireFormEvents() {
     renderForm();
   });
 
-  document.getElementById("submitBtn").addEventListener("click", submitForm);
+  document.getElementById("submitBtn").addEventListener("click", previewSubmitForm);
+  document.getElementById("reviewCloseBtn").addEventListener("click", closeReviewModal);
+  document.getElementById("reviewConfirmBtn").addEventListener("click", submitForm);
+  document.getElementById("reviewModal").addEventListener("click", handleReviewModalClick);
+  document.addEventListener("keydown", handleReviewModalKeydown);
 }
 
 function handleFormSelectorClick(event) {
@@ -585,7 +591,7 @@ function updateProgress() {
   submitBtn.disabled = isLastStep && !currentSectionValid;
 }
 
-async function submitForm() {
+async function previewSubmitForm() {
   const messageEl = document.getElementById("formMessage");
   const firstInvalidSectionIndex = getFirstInvalidSectionIndex();
   if (firstInvalidSectionIndex !== -1) {
@@ -599,6 +605,9 @@ async function submitForm() {
 
   messageEl.textContent = "Đang gửi dữ liệu...";
   messageEl.className = "form-message form-message--sheet";
+  messageEl.textContent = "";
+  openReviewModal();
+  return;
 
   const response = await fetch("/api/submissions", {
     method: "POST",
@@ -625,6 +634,124 @@ async function submitForm() {
   state.currentSectionIndex = 0;
   state.showValidation = false;
   renderForm();
+}
+
+async function submitForm() {
+  if (state.isSubmitting) {
+    return;
+  }
+
+  const messageEl = document.getElementById("formMessage");
+  const reviewMessageEl = document.getElementById("reviewModalMessage");
+  const confirmBtn = document.getElementById("reviewConfirmBtn");
+  const closeBtn = document.getElementById("reviewCloseBtn");
+
+  state.isSubmitting = true;
+  confirmBtn.disabled = true;
+  closeBtn.disabled = true;
+
+  messageEl.textContent = "Đang gửi dữ liệu...";
+  messageEl.className = "form-message form-message--sheet";
+  reviewMessageEl.textContent = "Đang gửi dữ liệu...";
+  reviewMessageEl.className = "form-message form-message--sheet";
+
+  const response = await fetch("/api/submissions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      form_code: state.selectedFormCode,
+      payload: state.values,
+    }),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    state.showValidation = true;
+    const detail = result.fields ? ` ${Object.values(result.fields).join(" ")}` : "";
+    messageEl.textContent = `${result.error || "Không thể gửi dữ liệu."}${detail}`;
+    messageEl.className = "form-message form-message--sheet is-error";
+    reviewMessageEl.textContent = `${result.error || "Không thể gửi dữ liệu."}${detail}`;
+    reviewMessageEl.className = "form-message form-message--sheet is-error";
+    state.isSubmitting = false;
+    confirmBtn.disabled = false;
+    closeBtn.disabled = false;
+    renderForm();
+    return;
+  }
+
+  closeReviewModal();
+  messageEl.textContent = `Đã gửi thông tin thành công. Loại phiếu: ${result.form_label}. Mã phiếu: #${result.submission_id}.`;
+  messageEl.className = "form-message form-message--sheet is-success";
+  seedInitialValues();
+  state.currentSectionIndex = 0;
+  state.showValidation = false;
+  state.isSubmitting = false;
+  confirmBtn.disabled = false;
+  closeBtn.disabled = false;
+  renderForm();
+  messageEl.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function buildDraftSubmissionItem() {
+  const personal = state.values.personal_basic || {};
+  return {
+    form_code: state.selectedFormCode,
+    full_name: personal.full_name || "",
+    citizen_id_number: personal.citizen_id_number || "",
+    phone: personal.phone || "",
+    payload: JSON.parse(JSON.stringify(state.values)),
+  };
+}
+
+function openReviewModal() {
+  const modal = document.getElementById("reviewModal");
+  const content = document.getElementById("reviewModalContent");
+  const title = document.getElementById("reviewModalTitle");
+  const subtitle = document.getElementById("reviewModalSubtitle");
+  const reviewMessageEl = document.getElementById("reviewModalMessage");
+  const draftItem = buildDraftSubmissionItem();
+
+  title.textContent = `Xem lại thông tin - ${getSelectedFormLabel()}`;
+  subtitle.textContent = "Kiểm tra toàn bộ thông tin đã nhập. Nếu đúng, bấm Xác nhận gửi.";
+  reviewMessageEl.textContent = "";
+  reviewMessageEl.className = "form-message form-message--sheet";
+  content.innerHTML = `
+    ${renderDetailPanelPersonal(draftItem)}
+    ${renderDetailPanelFamily(draftItem)}
+  `;
+
+  modal.hidden = false;
+  modal.style.display = "grid";
+  document.body.classList.add("review-modal-open");
+  state.reviewModalOpen = true;
+}
+
+function closeReviewModal() {
+  const modal = document.getElementById("reviewModal");
+  const reviewMessageEl = document.getElementById("reviewModalMessage");
+  const content = document.getElementById("reviewModalContent");
+  if (!modal) {
+    return;
+  }
+  modal.hidden = true;
+  modal.style.display = "none";
+  document.body.classList.remove("review-modal-open");
+  reviewMessageEl.textContent = "";
+  reviewMessageEl.className = "form-message form-message--sheet";
+  content.innerHTML = "";
+  state.reviewModalOpen = false;
+}
+
+function handleReviewModalClick(event) {
+  if (event.target === event.currentTarget) {
+    closeReviewModal();
+  }
+}
+
+function handleReviewModalKeydown(event) {
+  if (event.key === "Escape" && state.reviewModalOpen) {
+    closeReviewModal();
+  }
 }
 
 function isCurrentSectionValid() {
