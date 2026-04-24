@@ -1317,6 +1317,10 @@ pre {
   background: rgba(56, 17, 13, 0.58);
 }
 
+.review-modal[hidden] {
+  display: none !important;
+}
+
 .review-modal__dialog {
   width: min(92vw, 1360px);
   max-height: min(92vh, 1180px);
