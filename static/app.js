@@ -1341,15 +1341,23 @@ function renderCitizenPrimaryInfo(item) {
   const personal = item.payload?.personal_basic || {};
   const name = item.full_name || personal.birth_name || "C\u00f4ng d\u00e2n ch\u01b0a r\u00f5 t\u00ean";
   const meta = [
-    item.citizen_id_number ? `CCCD ${item.citizen_id_number}` : "",
-    personal.date_of_birth ? `Sinh ${personal.date_of_birth}` : "",
-    item.phone ? `S\u0110T ${item.phone}` : "",
+    item.citizen_id_number ? ["CCCD", item.citizen_id_number] : null,
+    personal.date_of_birth ? ["Sinh", personal.date_of_birth] : null,
+    item.phone ? ["S\u0110T", item.phone] : null,
+    personal.neighborhood ? ["Khu phố", personal.neighborhood] : null,
   ].filter(Boolean);
 
   return `
     <div class="admin-person-summary">
-      <strong>${escapeHtml(name)}</strong>
-      ${meta.map((line) => `<span>${escapeHtml(line)}</span>`).join("")}
+      <div class="admin-person-summary__name">${escapeHtml(name)}</div>
+      <div class="admin-person-summary__meta">
+        ${meta.map(([label, value]) => `
+          <div class="admin-person-summary__item">
+            <span class="admin-person-summary__label">${escapeHtml(label)}</span>
+            <strong class="admin-person-summary__value">${escapeHtml(value)}</strong>
+          </div>
+        `).join("")}
+      </div>
     </div>
   `;
 }
