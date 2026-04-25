@@ -33,6 +33,7 @@ from .database import (
     get_submission,
     init_db,
     list_form_interest_logs,
+    list_submissions_page,
     list_submissions,
     save_form_interest,
     save_submission,
@@ -76,7 +77,11 @@ class AppHandler(BaseHTTPRequestHandler):
             if not self._is_admin(parsed.query):
                 self._send_json({"error": "Unauthorized"}, status=HTTPStatus.UNAUTHORIZED)
                 return
-            self._send_json({"items": list_submissions()})
+            query = parse_qs(parsed.query)
+            page = self._parse_positive_int(query.get("page", ["1"])[0], default=1)
+            page_size = self._parse_positive_int(query.get("page_size", ["10"])[0], default=10)
+            search = query.get("q", [""])[0]
+            self._send_json(list_submissions_page(page=page, page_size=page_size, search=search))
             return
         if path == "/api/admin/form-interest-logs":
             if not self._is_admin(parsed.query):
@@ -412,6 +417,13 @@ class AppHandler(BaseHTTPRequestHandler):
         else:
             max_day = 31
         return day <= max_day
+
+    def _parse_positive_int(self, raw_value: str, default: int = 1) -> int:
+        try:
+            value = int(str(raw_value).strip())
+        except (TypeError, ValueError):
+            return default
+        return value if value > 0 else default
 
     def _send_html(self, content: bytes, status: HTTPStatus = HTTPStatus.OK) -> None:
         self.send_response(status)

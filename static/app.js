@@ -8,6 +8,10 @@ const state = {
   adminItems: [],
   adminInterestItems: [],
   adminCitizenIdFilter: "",
+  adminPage: 1,
+  adminPageSize: 10,
+  adminTotalItems: 0,
+  adminTotalPages: 1,
   currentAdminModalItem: null,
   currentAdminModalMode: "",
   currentAdminModalTab: "personal",
@@ -900,6 +904,7 @@ async function bootAdminPage() {
   document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
   document.getElementById("adminSearchCitizenId").addEventListener("input", handleAdminCitizenIdSearch);
   document.getElementById("adminTableWrap").addEventListener("click", handleAdminTableActions);
+  document.getElementById("adminTableWrap").addEventListener("click", handleAdminPaginationClick);
   document.getElementById("adminModalCloseBtn").addEventListener("click", closeAdminModal);
   document.getElementById("adminModal").addEventListener("click", handleAdminModalClick);
   document.addEventListener("keydown", handleAdminModalKeydown);
@@ -962,6 +967,9 @@ async function logoutAdmin() {
   state.adminItems = [];
   state.adminInterestItems = [];
   state.adminCitizenIdFilter = "";
+  state.adminPage = 1;
+  state.adminTotalItems = 0;
+  state.adminTotalPages = 1;
   closeAdminModal();
   showAdminLogin();
 }
@@ -971,9 +979,17 @@ async function loadAdminData() {
   messageEl.textContent = "Đang tải dữ liệu quản trị...";
   messageEl.className = "form-message";
 
+  const params = new URLSearchParams({
+    page: String(state.adminPage || 1),
+    page_size: String(state.adminPageSize || 10),
+  });
+  if (state.adminCitizenIdFilter) {
+    params.set("q", state.adminCitizenIdFilter);
+  }
+
   const [summaryResponse, submissionsResponse, interestResponse] = await Promise.all([
     fetch("/api/admin/summary"),
-    fetch("/api/admin/submissions"),
+    fetch(`/api/admin/submissions?${params.toString()}`),
     fetch("/api/admin/form-interest-logs"),
   ]);
 
@@ -988,28 +1004,33 @@ async function loadAdminData() {
   const interestLogs = await interestResponse.json();
   state.adminItems = submissions.items || [];
   state.adminInterestItems = interestLogs.items || [];
+  state.adminPage = submissions.page || 1;
+  state.adminPageSize = submissions.page_size || 10;
+  state.adminTotalItems = submissions.total_items || 0;
+  state.adminTotalPages = submissions.total_pages || 1;
 
   document.getElementById("adminSummaryCards").innerHTML = renderSummaryCards(summary);
   document.getElementById("adminSummaryLists").innerHTML = renderSummaryLists(summary);
   renderAdminTableWrap();
   renderAdminTrackingWrap();
 
-  messageEl.textContent = `Đã tải ${state.adminItems.length} phiếu gửi và ${state.adminInterestItems.length} lượt tracking.`;
+  messageEl.textContent = `Đã tải ${state.adminItems.length}/${state.adminTotalItems} phiếu ở trang ${state.adminPage}/${state.adminTotalPages} và ${state.adminInterestItems.length} lượt tracking.`;
   messageEl.className = "form-message is-success";
 }
 
 function handleAdminCitizenIdSearch(event) {
   state.adminCitizenIdFilter = event.target.value.trim();
-  renderAdminTableWrap();
+  state.adminPage = 1;
+  void loadAdminData();
 }
 
 function renderAdminTableWrap() {
   const tableWrap = document.getElementById("adminTableWrap");
   const messageEl = document.getElementById("adminMessage");
-  const items = getFilteredAdminItems();
+  const items = state.adminItems;
   tableWrap.innerHTML = renderAdminTable(items);
 
-  if (!state.adminItems.length) {
+  if (!state.adminTotalItems) {
     return;
   }
 
@@ -1033,6 +1054,63 @@ function getFilteredAdminItems() {
   }
   const normalizedFilter = normalizeSearchText(state.adminCitizenIdFilter);
   return state.adminItems.filter((item) => getAdminSearchBlob(item).includes(normalizedFilter));
+}
+
+function handleAdminPaginationClick(event) {
+  const paginationButton = event.target.closest("[data-admin-page]");
+  if (!paginationButton) {
+    return;
+  }
+  const nextPage = Number.parseInt(paginationButton.dataset.adminPage || "", 10);
+  if (!Number.isFinite(nextPage) || nextPage < 1 || nextPage === state.adminPage) {
+    return;
+  }
+  state.adminPage = nextPage;
+  void loadAdminData();
+}
+
+function renderAdminPagination() {
+  if ((state.adminTotalPages || 1) <= 1) {
+    return "";
+  }
+
+  const prevDisabled = state.adminPage <= 1 ? "disabled" : "";
+  const nextDisabled = state.adminPage >= state.adminTotalPages ? "disabled" : "";
+  const startItem = state.adminTotalItems ? ((state.adminPage - 1) * state.adminPageSize) + 1 : 0;
+  const endItem = Math.min(state.adminPage * state.adminPageSize, state.adminTotalItems);
+
+  return `
+    <div class="admin-pagination">
+      <div class="admin-pagination__summary">
+        Hiển thị ${startItem}-${endItem} / ${state.adminTotalItems} phiếu
+      </div>
+      <div class="admin-pagination__actions">
+        <button type="button" class="ghost-btn admin-pagination__btn" data-admin-page="${state.adminPage - 1}" ${prevDisabled}>Trang trước</button>
+        <span class="admin-pagination__page">Trang ${state.adminPage}/${state.adminTotalPages}</span>
+        <button type="button" class="ghost-btn admin-pagination__btn" data-admin-page="${state.adminPage + 1}" ${nextDisabled}>Trang sau</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminTableWrap() {
+  const tableWrap = document.getElementById("adminTableWrap");
+  const messageEl = document.getElementById("adminMessage");
+  const items = state.adminItems;
+  tableWrap.innerHTML = renderAdminTable(items);
+
+  if (!state.adminTotalItems) {
+    return;
+  }
+
+  if (state.adminCitizenIdFilter) {
+    messageEl.textContent = `Tìm thấy ${state.adminTotalItems} phiếu theo từ khóa. Đang hiển thị ${items.length} phiếu ở trang ${state.adminPage}/${state.adminTotalPages}.`;
+    messageEl.className = "form-message is-success";
+    return;
+  }
+
+  messageEl.textContent = `Đang hiển thị ${items.length}/${state.adminTotalItems} phiếu ở trang ${state.adminPage}/${state.adminTotalPages}.`;
+  messageEl.className = "form-message";
 }
 
 function getAdminSearchBlob(item) {
@@ -1187,6 +1265,53 @@ function renderAdminTrackingTable(items) {
       <div class="admin-record-cards admin-record-cards--tracking">
         ${items.map((item) => renderAdminTrackingCard(item)).join("")}
       </div>
+    </div>
+  `;
+}
+
+function renderAdminTable(items) {
+  if (!items.length) {
+    return "<p>Chưa có phiếu nào phù hợp.</p>";
+  }
+
+  const rows = items.map((item) => `
+    <tr>
+      <td class="admin-table__id">${item.id}</td>
+      <td><span class="form-chip">${escapeHtml(item.form_label || item.form_code || "-")}</span></td>
+      <td>${renderCitizenPrimaryInfo(item)}</td>
+      <td>${renderCitizenLocationInfo(item)}</td>
+      <td>${renderCitizenFamilyInfo(item)}</td>
+      <td>${renderCitizenTimelineInfo(item)}</td>
+      <td class="admin-table__date">${escapeHtml(formatDateTime(item.created_at))}</td>
+      <td>${renderCitizenSummaryDetails(item)}</td>
+      <td class="admin-table__actions">${renderCitizenActions(item)}</td>
+    </tr>
+  `).join("");
+
+  return `
+    <div class="admin-record-layout">
+      <div class="admin-record-table">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Loại phiếu</th>
+              <th>Thông tin công dân</th>
+              <th>Địa bàn</th>
+              <th>Gia đình</th>
+              <th>Quá trình</th>
+              <th>Thời gian tạo</th>
+              <th>Tóm tắt</th>
+              <th>Tác vụ</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <div class="admin-record-cards">
+        ${items.map((item) => renderAdminSubmissionCard(item)).join("")}
+      </div>
+      ${renderAdminPagination()}
     </div>
   `;
 }

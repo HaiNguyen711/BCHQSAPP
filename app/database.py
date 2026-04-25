@@ -4,6 +4,7 @@ import csv
 import io
 import json
 import sqlite3
+import unicodedata
 from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
@@ -138,6 +139,58 @@ def list_submissions() -> list[dict[str, Any]]:
             """
         ).fetchall()
     return [_deserialize_submission_row(row) for row in rows]
+
+
+def list_submissions_page(
+    page: int = 1,
+    page_size: int = 10,
+    search: str = "",
+) -> dict[str, Any]:
+    safe_page_size = max(1, min(int(page_size or 10), 100))
+    safe_page = max(1, int(page or 1))
+    normalized_search = _normalize_search_text(search)
+
+    if normalized_search:
+        rows = list_submissions()
+        filtered_rows = [row for row in rows if _submission_search_blob(row).find(normalized_search) != -1]
+        total_items = len(filtered_rows)
+        total_pages = max(1, (total_items + safe_page_size - 1) // safe_page_size) if total_items else 1
+        safe_page = min(safe_page, total_pages)
+        start = (safe_page - 1) * safe_page_size
+        end = start + safe_page_size
+        return {
+            "items": filtered_rows[start:end],
+            "page": safe_page,
+            "page_size": safe_page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "search": search,
+        }
+
+    with get_connection() as conn:
+        total_items = int(conn.execute("SELECT COUNT(*) FROM submissions").fetchone()[0])
+        total_pages = max(1, (total_items + safe_page_size - 1) // safe_page_size) if total_items else 1
+        safe_page = min(safe_page, total_pages)
+        offset = (safe_page - 1) * safe_page_size
+        rows = conn.execute(
+            """
+            SELECT id, form_code, form_label, full_name, citizen_id_number, phone, hometown,
+                   current_residence, created_at, payload_json
+            FROM submissions
+            ORDER BY id DESC
+            LIMIT ? OFFSET ?
+            """,
+            (safe_page_size, offset),
+        ).fetchall()
+
+    return {
+        "items": [_deserialize_submission_row(row) for row in rows],
+        "page": safe_page,
+        "page_size": safe_page_size,
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "search": search,
+    }
 
 
 def get_submission(submission_id: int) -> dict[str, Any] | None:
@@ -415,6 +468,32 @@ def _stringify_value(value: Any) -> str:
 
 def _top_counter_items(counter: Counter[str], limit: int = 5) -> list[dict[str, Any]]:
     return [{"label": label, "count": count} for label, count in counter.most_common(limit)]
+
+
+def _normalize_search_text(value: Any) -> str:
+    text = str(value or "").strip().lower()
+    normalized = unicodedata.normalize("NFD", text)
+    return "".join(char for char in normalized if unicodedata.category(char) != "Mn")
+
+
+def _collect_search_tokens(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        tokens: list[str] = []
+        for entry in value:
+            tokens.extend(_collect_search_tokens(entry))
+        return tokens
+    if isinstance(value, dict):
+        tokens = []
+        for entry in value.values():
+            tokens.extend(_collect_search_tokens(entry))
+        return tokens
+    return [str(value)]
+
+
+def _submission_search_blob(item: dict[str, Any]) -> str:
+    return _normalize_search_text(" ".join(_collect_search_tokens(item)))
 
 
 def _add_counter_value(counter: Counter[str], raw_value: Any, case_insensitive: bool = False) -> None:
