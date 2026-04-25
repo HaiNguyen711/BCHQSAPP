@@ -1362,15 +1362,19 @@ function renderCompactBlock(title, content) {
 
 function renderCitizenPrimaryInfo(item) {
   const personal = item.payload?.personal_basic || {};
-  const pieces = [
-    { label: "Họ tên", value: item.full_name },
-    { label: "Khai sinh", value: personal.birth_name },
-    { label: "Giới tính", value: personal.gender },
-    { label: "Ngày sinh", value: personal.date_of_birth },
-    { label: "CCCD", value: item.citizen_id_number },
-    { label: "Điện thoại", value: item.phone },
-  ].filter((piece) => piece.value);
-  return renderKeyValueList(pieces);
+  const name = item.full_name || personal.birth_name || "C\u00f4ng d\u00e2n ch\u01b0a r\u00f5 t\u00ean";
+  const meta = [
+    item.citizen_id_number ? `CCCD ${item.citizen_id_number}` : "",
+    personal.date_of_birth ? `Sinh ${personal.date_of_birth}` : "",
+    item.phone ? `S\u0110T ${item.phone}` : "",
+  ].filter(Boolean);
+
+  return `
+    <div class="admin-person-summary">
+      <strong>${escapeHtml(name)}</strong>
+      ${meta.map((line) => `<span>${escapeHtml(line)}</span>`).join("")}
+    </div>
+  `;
 }
 
 function renderCitizenLocationInfo(item) {
