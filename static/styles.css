@@ -1069,6 +1069,23 @@ pre {
   min-width: 120px;
 }
 
+.admin-tracking-overview {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-tracking-overview__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.admin-tracking-overview__lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
 .admin-record-table {
   display: block;
 }
@@ -2210,6 +2227,11 @@ body.admin-modal-open {
 
   .admin-pagination__btn {
     width: 100%;
+  }
+
+  .admin-tracking-overview__stats,
+  .admin-tracking-overview__lists {
+    grid-template-columns: 1fr;
   }
 }
 

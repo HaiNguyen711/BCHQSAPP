@@ -987,13 +987,12 @@ async function loadAdminData() {
     params.set("q", state.adminCitizenIdFilter);
   }
 
-  const [summaryResponse, submissionsResponse, interestResponse] = await Promise.all([
+  const [summaryResponse, submissionsResponse] = await Promise.all([
     fetch("/api/admin/summary"),
     fetch(`/api/admin/submissions?${params.toString()}`),
-    fetch("/api/admin/form-interest-logs"),
   ]);
 
-  if (summaryResponse.status === 401 || submissionsResponse.status === 401 || interestResponse.status === 401) {
+  if (summaryResponse.status === 401 || submissionsResponse.status === 401) {
     showAdminLogin();
     messageEl.textContent = "";
     return;
@@ -1001,9 +1000,8 @@ async function loadAdminData() {
 
   const summary = await summaryResponse.json();
   const submissions = await submissionsResponse.json();
-  const interestLogs = await interestResponse.json();
   state.adminItems = submissions.items || [];
-  state.adminInterestItems = interestLogs.items || [];
+  state.adminInterestItems = Array.from({ length: summary.total_interest_logs || 0 });
   state.adminPage = submissions.page || 1;
   state.adminPageSize = submissions.page_size || 10;
   state.adminTotalItems = submissions.total_items || 0;
@@ -1012,7 +1010,7 @@ async function loadAdminData() {
   document.getElementById("adminSummaryCards").innerHTML = renderSummaryCards(summary);
   document.getElementById("adminSummaryLists").innerHTML = renderSummaryLists(summary);
   renderAdminTableWrap();
-  renderAdminTrackingWrap();
+  renderAdminTrackingWrap(summary);
 
   messageEl.textContent = `Đã tải ${state.adminItems.length}/${state.adminTotalItems} phiếu ở trang ${state.adminPage}/${state.adminTotalPages} và ${state.adminInterestItems.length} lượt tracking.`;
   messageEl.className = "form-message is-success";
@@ -1264,6 +1262,41 @@ function renderAdminTrackingTable(items) {
       </div>
       <div class="admin-record-cards admin-record-cards--tracking">
         ${items.map((item) => renderAdminTrackingCard(item)).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderAdminTrackingWrap(summary) {
+  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingOverview(summary || {});
+}
+
+function renderAdminTrackingOverview(summary) {
+  const statCards = [
+    { label: "Tổng lượt tracking", value: summary.total_interest_logs || 0 },
+    { label: "Tracking hôm nay", value: summary.today_interest_logs || 0 },
+    { label: "Loại phiếu được quan tâm", value: (summary.interest_forms || []).length || 0 },
+  ];
+
+  return `
+    <div class="admin-tracking-overview">
+      <div class="admin-tracking-overview__stats">
+        ${statCards.map((card) => `
+          <div class="stat-card">
+            <div class="stat-card__label">${escapeHtml(card.label)}</div>
+            <div class="stat-card__value">${escapeHtml(card.value)}</div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="admin-tracking-overview__lists">
+        <div class="summary-card">
+          <h3>Theo loại phiếu</h3>
+          ${renderSummaryListItems(summary.interest_forms || [])}
+        </div>
+        <div class="summary-card">
+          <h3>Theo nguồn truy cập</h3>
+          ${renderSummaryListItems(summary.interest_sources || [])}
+        </div>
       </div>
     </div>
   `;

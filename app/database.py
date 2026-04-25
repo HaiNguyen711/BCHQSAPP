@@ -230,6 +230,7 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
     training_counter: Counter[str] = Counter()
     submitted_form_counter: Counter[str] = Counter()
     interest_form_counter: Counter[str] = Counter()
+    interest_source_counter: Counter[str] = Counter()
 
     for item in rows:
         payload = item.get("payload", {})
@@ -248,6 +249,7 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
         if created_at and created_at.date() == now_date:
             today_interest_count += 1
         _add_counter_value(interest_form_counter, item.get("form_label"))
+        _add_counter_value(interest_source_counter, item.get("source"), case_insensitive=True)
 
     return {
         "total_submissions": len(rows),
@@ -263,6 +265,7 @@ def summarize_submissions(items: list[dict[str, Any]] | None = None) -> dict[str
         "top_training_levels": _top_counter_items(training_counter),
         "submitted_forms": _top_counter_items(submitted_form_counter, limit=10),
         "interest_forms": _top_counter_items(interest_form_counter, limit=10),
+        "interest_sources": _top_counter_items(interest_source_counter, limit=10),
     }
 
 
