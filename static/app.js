@@ -902,7 +902,8 @@ async function bootAdminPage() {
   document.getElementById("logoutAdminBtn").addEventListener("click", logoutAdmin);
   document.getElementById("exportBtn").addEventListener("click", exportCsv);
   document.getElementById("exportExcelBtn").addEventListener("click", exportExcel);
-  document.getElementById("adminSearchCitizenId").addEventListener("input", handleAdminCitizenIdSearch);
+  document.getElementById("adminSearchBtn").addEventListener("click", handleAdminCitizenIdSearch);
+  document.getElementById("adminSearchCitizenId").addEventListener("keydown", handleAdminSearchKeydown);
   document.getElementById("adminTableWrap").addEventListener("click", handleAdminTableActions);
   document.getElementById("adminTableWrap").addEventListener("click", handleAdminPaginationClick);
   document.getElementById("adminModalCloseBtn").addEventListener("click", closeAdminModal);
@@ -1016,10 +1017,18 @@ async function loadAdminData() {
   messageEl.className = "form-message is-success";
 }
 
-function handleAdminCitizenIdSearch(event) {
-  state.adminCitizenIdFilter = event.target.value.trim();
+function handleAdminCitizenIdSearch() {
+  state.adminCitizenIdFilter = document.getElementById("adminSearchCitizenId").value.trim();
   state.adminPage = 1;
   void loadAdminData();
+}
+
+function handleAdminSearchKeydown(event) {
+  if (event.key !== "Enter") {
+    return;
+  }
+  event.preventDefault();
+  handleAdminCitizenIdSearch();
 }
 
 function renderAdminTableWrap() {
