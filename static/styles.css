@@ -2252,7 +2252,7 @@ body.admin-modal-open {
   }
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 980px) {
   .table-wrap {
     overflow: visible;
   }
@@ -2263,5 +2263,10 @@ body.admin-modal-open {
 
   .admin-record-cards {
     display: grid;
+  }
+
+  .admin-record-card__sections,
+  .admin-record-card .admin-action-stack {
+    grid-template-columns: 1fr;
   }
 }

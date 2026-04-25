@@ -1053,75 +1053,6 @@ function renderAdminTableWrap() {
   }
 
   if (state.adminCitizenIdFilter) {
-    messageEl.textContent = `Tìm thấy ${items.length}/${state.adminItems.length} phiếu theo từ khóa.`;
-    messageEl.className = "form-message is-success";
-    return;
-  }
-
-  messageEl.textContent = `Đang hiển thị ${items.length} phiếu đã gửi.`;
-  messageEl.className = "form-message";
-}
-
-function renderAdminTrackingWrap(summary) {
-  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingOverview(summary || {});
-}
-
-function getFilteredAdminItems() {
-  if (!state.adminCitizenIdFilter) {
-    return state.adminItems;
-  }
-  const normalizedFilter = normalizeSearchText(state.adminCitizenIdFilter);
-  return state.adminItems.filter((item) => getAdminSearchBlob(item).includes(normalizedFilter));
-}
-
-function handleAdminPaginationClick(event) {
-  const paginationButton = event.target.closest("[data-admin-page]");
-  if (!paginationButton) {
-    return;
-  }
-  const nextPage = Number.parseInt(paginationButton.dataset.adminPage || "", 10);
-  if (!Number.isFinite(nextPage) || nextPage < 1 || nextPage === state.adminPage) {
-    return;
-  }
-  state.adminPage = nextPage;
-  void loadAdminData();
-}
-
-function renderAdminPagination() {
-  if ((state.adminTotalPages || 1) <= 1) {
-    return "";
-  }
-
-  const prevDisabled = state.adminPage <= 1 ? "disabled" : "";
-  const nextDisabled = state.adminPage >= state.adminTotalPages ? "disabled" : "";
-  const startItem = state.adminTotalItems ? ((state.adminPage - 1) * state.adminPageSize) + 1 : 0;
-  const endItem = Math.min(state.adminPage * state.adminPageSize, state.adminTotalItems);
-
-  return `
-    <div class="admin-pagination">
-      <div class="admin-pagination__summary">
-        Hiển thị ${startItem}-${endItem} / ${state.adminTotalItems} phiếu
-      </div>
-      <div class="admin-pagination__actions">
-        <button type="button" class="ghost-btn admin-pagination__btn" data-admin-page="${state.adminPage - 1}" ${prevDisabled}>Trang trước</button>
-        <span class="admin-pagination__page">Trang ${state.adminPage}/${state.adminTotalPages}</span>
-        <button type="button" class="ghost-btn admin-pagination__btn" data-admin-page="${state.adminPage + 1}" ${nextDisabled}>Trang sau</button>
-      </div>
-    </div>
-  `;
-}
-
-function renderAdminTableWrap() {
-  const tableWrap = document.getElementById("adminTableWrap");
-  const messageEl = document.getElementById("adminMessage");
-  const items = state.adminItems;
-  tableWrap.innerHTML = renderAdminTable(items);
-
-  if (!state.adminTotalItems) {
-    return;
-  }
-
-  if (state.adminCitizenIdFilter) {
     messageEl.textContent = `Tìm thấy ${state.adminTotalItems} phiếu theo từ khóa.`;
     messageEl.className = "form-message is-success";
     return;
@@ -1321,9 +1252,8 @@ function renderAdminSubmissionCard(item) {
         </div>
         <time>${escapeHtml(formatDateTime(item.created_at))}</time>
       </div>
-      <h4>${escapeHtml(item.full_name || "C\u00f4ng d\u00e2n ch\u01b0a r\u00f5 t\u00ean")}</h4>
       <div class="admin-record-card__sections">
-        ${renderCompactBlock("C\u00f4ng d\u00e2n", renderCitizenPrimaryInfo(item))}
+        ${renderCitizenPrimaryInfo(item)}
       </div>
       <div class="admin-record-card__footer">
         ${renderCitizenActions(item)}
