@@ -154,16 +154,13 @@ def list_submissions_page(
         rows = list_submissions()
         filtered_rows = [row for row in rows if _submission_search_blob(row).find(normalized_search) != -1]
         total_items = len(filtered_rows)
-        total_pages = max(1, (total_items + safe_page_size - 1) // safe_page_size) if total_items else 1
-        safe_page = min(safe_page, total_pages)
-        start = (safe_page - 1) * safe_page_size
-        end = start + safe_page_size
+        effective_page_size = total_items if total_items else safe_page_size
         return {
-            "items": filtered_rows[start:end],
-            "page": safe_page,
-            "page_size": safe_page_size,
+            "items": filtered_rows,
+            "page": 1,
+            "page_size": effective_page_size,
             "total_items": total_items,
-            "total_pages": total_pages,
+            "total_pages": 1,
             "search": search,
         }
 

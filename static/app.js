@@ -1104,7 +1104,7 @@ function renderAdminTableWrap() {
   }
 
   if (state.adminCitizenIdFilter) {
-    messageEl.textContent = `Tìm thấy ${state.adminTotalItems} phiếu theo từ khóa. Đang hiển thị ${items.length} phiếu ở trang ${state.adminPage}/${state.adminTotalPages}.`;
+    messageEl.textContent = `Tìm thấy ${state.adminTotalItems} phiếu theo từ khóa.`;
     messageEl.className = "form-message is-success";
     return;
   }
