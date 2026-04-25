@@ -991,41 +991,47 @@ async function loadAdminData() {
   messageEl.textContent = "Đang tải dữ liệu quản trị...";
   messageEl.className = "form-message";
 
-  const params = new URLSearchParams({
-    page: String(state.adminPage || 1),
-    page_size: String(state.adminPageSize || 20),
-  });
-  if (state.adminCitizenIdFilter) {
-    params.set("q", state.adminCitizenIdFilter);
+  try {
+    const params = new URLSearchParams({
+      page: String(state.adminPage || 1),
+      page_size: String(state.adminPageSize || 20),
+    });
+    if (state.adminCitizenIdFilter) {
+      params.set("q", state.adminCitizenIdFilter);
+    }
+
+    const [summaryResponse, submissionsResponse] = await Promise.all([
+      fetch("/api/admin/summary"),
+      fetch(`/api/admin/submissions?${params.toString()}`),
+    ]);
+
+    if (summaryResponse.status === 401 || submissionsResponse.status === 401) {
+      showAdminLogin();
+      messageEl.textContent = "";
+      return;
+    }
+
+    const summary = await summaryResponse.json();
+    const submissions = await submissionsResponse.json();
+    state.adminItems = submissions.items || [];
+    state.adminInterestItems = Array.from({ length: summary.total_interest_logs || 0 });
+    state.adminPage = submissions.page || 1;
+    state.adminPageSize = submissions.page_size || 20;
+    state.adminTotalItems = submissions.total_items || 0;
+    state.adminTotalPages = submissions.total_pages || 1;
+
+    document.getElementById("adminSummaryCards").innerHTML = renderSummaryCards(summary);
+    document.getElementById("adminSummaryLists").innerHTML = renderSummaryLists(summary);
+    renderAdminTableWrap();
+    renderAdminTrackingWrap(summary);
+
+    messageEl.textContent = `Đã tải ${state.adminItems.length}/${state.adminTotalItems} phiếu ở trang ${state.adminPage}/${state.adminTotalPages} và ${state.adminInterestItems.length} lượt tracking.`;
+    messageEl.className = "form-message is-success";
+  } catch (error) {
+    console.error("admin-load-error", error);
+    messageEl.textContent = "Không tải được dữ liệu quản trị. Hãy làm mới trang và thử lại.";
+    messageEl.className = "form-message is-error";
   }
-
-  const [summaryResponse, submissionsResponse] = await Promise.all([
-    fetch("/api/admin/summary"),
-    fetch(`/api/admin/submissions?${params.toString()}`),
-  ]);
-
-  if (summaryResponse.status === 401 || submissionsResponse.status === 401) {
-    showAdminLogin();
-    messageEl.textContent = "";
-    return;
-  }
-
-  const summary = await summaryResponse.json();
-  const submissions = await submissionsResponse.json();
-  state.adminItems = submissions.items || [];
-  state.adminInterestItems = Array.from({ length: summary.total_interest_logs || 0 });
-  state.adminPage = submissions.page || 1;
-  state.adminPageSize = submissions.page_size || 20;
-  state.adminTotalItems = submissions.total_items || 0;
-  state.adminTotalPages = submissions.total_pages || 1;
-
-  document.getElementById("adminSummaryCards").innerHTML = renderSummaryCards(summary);
-  document.getElementById("adminSummaryLists").innerHTML = renderSummaryLists(summary);
-  renderAdminTableWrap();
-  renderAdminTrackingWrap(summary);
-
-  messageEl.textContent = `Đã tải ${state.adminItems.length}/${state.adminTotalItems} phiếu ở trang ${state.adminPage}/${state.adminTotalPages} và ${state.adminInterestItems.length} lượt tracking.`;
-  messageEl.className = "form-message is-success";
 }
 
 function handleAdminCitizenIdSearch() {
@@ -1060,6 +1066,47 @@ function renderAdminTableWrap() {
 
   messageEl.textContent = `Đang hiển thị ${items.length}/${state.adminTotalItems} phiếu ở trang ${state.adminPage}/${state.adminTotalPages}.`;
   messageEl.className = "form-message";
+}
+
+function renderAdminTrackingWrap(summary) {
+  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingOverview(summary || {});
+}
+
+function handleAdminPaginationClick(event) {
+  const paginationButton = event.target.closest("[data-admin-page]");
+  if (!paginationButton) {
+    return;
+  }
+  const nextPage = Number.parseInt(paginationButton.dataset.adminPage || "", 10);
+  if (!Number.isFinite(nextPage) || nextPage < 1 || nextPage === state.adminPage) {
+    return;
+  }
+  state.adminPage = nextPage;
+  void loadAdminData();
+}
+
+function renderAdminPagination() {
+  if ((state.adminTotalPages || 1) <= 1) {
+    return "";
+  }
+
+  const prevDisabled = state.adminPage <= 1 ? "disabled" : "";
+  const nextDisabled = state.adminPage >= state.adminTotalPages ? "disabled" : "";
+  const startItem = state.adminTotalItems ? ((state.adminPage - 1) * state.adminPageSize) + 1 : 0;
+  const endItem = Math.min(state.adminPage * state.adminPageSize, state.adminTotalItems);
+
+  return `
+    <div class="admin-pagination">
+      <div class="admin-pagination__summary">
+        Hiển thị ${startItem}-${endItem} / ${state.adminTotalItems} phiếu
+      </div>
+      <div class="admin-pagination__actions">
+        <button type="button" class="ghost-btn admin-pagination__btn" data-admin-page="${state.adminPage - 1}" ${prevDisabled}>Trang trước</button>
+        <span class="admin-pagination__page">Trang ${state.adminPage}/${state.adminTotalPages}</span>
+        <button type="button" class="ghost-btn admin-pagination__btn" data-admin-page="${state.adminPage + 1}" ${nextDisabled}>Trang sau</button>
+      </div>
+    </div>
+  `;
 }
 
 function getAdminSearchBlob(item) {
