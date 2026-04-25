@@ -1183,7 +1183,6 @@ function renderSummaryCards(summary) {
     { label: "Tổng số phiếu", value: summary.total_submissions || 0 },
     { label: "Phiếu hôm nay", value: summary.today_submissions || 0 },
     { label: "CCCD duy nhất", value: summary.unique_citizen_ids || 0 },
-    { label: "Lượt chọn phiếu phát triển", value: summary.total_interest_logs || 0 },
   ];
 
   return cards.map((card) => `
@@ -1197,10 +1196,8 @@ function renderSummaryCards(summary) {
 function renderSummaryLists(summary) {
   const groups = [
     { title: "Loại phiếu đã nộp", items: summary.submitted_forms || [] },
-    { title: "Loại phiếu đang phát triển được chọn", items: summary.interest_forms || [] },
     { title: "Top khu phố", items: summary.top_neighborhoods || [] },
     { title: "Top số lượng theo năm sinh", items: summary.top_birth_years || [] },
-    { title: "Top phường", items: summary.top_wards || [] },
     { title: "Top trình độ đào tạo", items: summary.top_training_levels || [] },
   ];
 
