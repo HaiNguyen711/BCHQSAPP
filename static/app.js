@@ -16,6 +16,7 @@ const state = {
   currentAdminModalMode: "",
   currentAdminModalTab: "personal",
   reviewModalOpen: false,
+  successModalOpen: false,
   isSubmitting: false,
 };
 
@@ -97,18 +98,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 window.addEventListener("load", () => {
   if (document.body.dataset.page === "form") {
     closeReviewModal();
+    closeSuccessModal();
   }
 });
 
 window.addEventListener("pageshow", () => {
   if (document.body.dataset.page === "form") {
     closeReviewModal();
+    closeSuccessModal();
   }
 });
 
 async function bootFormPage() {
   state.formOptions = Array.isArray(window.APP_BOOTSTRAP?.formOptions) ? window.APP_BOOTSTRAP.formOptions : [];
   closeReviewModal();
+  closeSuccessModal();
   syncLandingIntro();
 
   const response = await fetch("/api/form-schema?v=20260421-2", { cache: "no-store" });
@@ -160,6 +164,9 @@ function wireFormEvents() {
   document.getElementById("reviewCloseBtn").addEventListener("click", closeReviewModal);
   document.getElementById("reviewConfirmBtn").addEventListener("click", submitForm);
   document.getElementById("reviewModal").addEventListener("click", handleReviewModalClick);
+  document.getElementById("successCloseBtn").addEventListener("click", closeSuccessModal);
+  document.getElementById("successDoneBtn").addEventListener("click", closeSuccessModal);
+  document.getElementById("successModal").addEventListener("click", handleSuccessModalClick);
   document.addEventListener("keydown", handleReviewModalKeydown);
 }
 
@@ -717,7 +724,7 @@ async function submitForm() {
   confirmBtn.disabled = false;
   closeBtn.disabled = false;
   renderForm();
-  messageEl.scrollIntoView({ behavior: "smooth", block: "center" });
+  openSuccessModal(result);
 }
 
 function buildDraftSubmissionItem() {
@@ -783,6 +790,48 @@ function handleReviewModalClick(event) {
 function handleReviewModalKeydown(event) {
   if (event.key === "Escape" && state.reviewModalOpen) {
     closeReviewModal();
+    return;
+  }
+  if (event.key === "Escape" && state.successModalOpen) {
+    closeSuccessModal();
+  }
+}
+
+function openSuccessModal(result) {
+  const modal = document.getElementById("successModal");
+  const title = document.getElementById("successModalTitle");
+  const subtitle = document.getElementById("successModalSubtitle");
+  const submissionCode = document.getElementById("successModalCode");
+  const detail = document.getElementById("successModalDetail");
+
+  if (!modal || !title || !subtitle || !submissionCode || !detail) {
+    return;
+  }
+
+  title.textContent = "Đã gửi thông tin thành công";
+  subtitle.textContent = "BCHQS đã nhận hồ sơ của bạn trên hệ thống.";
+  submissionCode.textContent = `Mã phiếu #${result.submission_id}`;
+  detail.textContent = `Loại phiếu: ${result.form_label}. Bạn có thể dùng mã phiếu này khi cần BCHQS tra cứu lại hồ sơ.`;
+  modal.hidden = false;
+  modal.style.display = "grid";
+  document.body.classList.add("success-modal-open");
+  state.successModalOpen = true;
+}
+
+function closeSuccessModal() {
+  const modal = document.getElementById("successModal");
+  if (!modal) {
+    return;
+  }
+  modal.hidden = true;
+  modal.style.display = "none";
+  document.body.classList.remove("success-modal-open");
+  state.successModalOpen = false;
+}
+
+function handleSuccessModalClick(event) {
+  if (event.target === event.currentTarget) {
+    closeSuccessModal();
   }
 }
 

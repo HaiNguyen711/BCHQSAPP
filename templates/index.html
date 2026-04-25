@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mục thu thập thông tin BCHQS</title>
-  <link rel="stylesheet" href="/static/styles.css?v=20260425-registration-open-only-1">
+  <link rel="stylesheet" href="/static/styles.css?v=20260425-admin-compact-results-14">
 </head>
 <body data-page="form">
   <main class="shell shell--landing">
@@ -94,6 +94,23 @@
       </div>
     </section>
 
+    <section id="successModal" class="success-modal" hidden style="display:none">
+      <div class="success-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="successModalTitle">
+        <div class="success-modal__badge" aria-hidden="true">✓</div>
+        <div class="success-modal__heading">
+          <div class="success-modal__eyebrow">Gửi hồ sơ thành công</div>
+          <h2 id="successModalTitle">Đã gửi thông tin thành công</h2>
+          <p id="successModalSubtitle" class="success-modal__subtitle">BCHQS đã nhận hồ sơ của bạn trên hệ thống.</p>
+        </div>
+        <div id="successModalCode" class="success-modal__code">Mã phiếu #0000</div>
+        <p id="successModalDetail" class="success-modal__detail"></p>
+        <div class="success-modal__actions">
+          <button id="successCloseBtn" type="button" class="ghost-btn">Đóng</button>
+          <button id="successDoneBtn" type="button" class="primary-btn">Tôi đã hiểu</button>
+        </div>
+      </div>
+    </section>
+
     <section class="contact-card">
       <div class="contact-card__header">
         <h2>Thông tin liên hệ BCHQS</h2>
@@ -125,6 +142,6 @@
       formOptions: {{ FORM_OPTIONS_JSON }}
     };
   </script>
-  <script src="/static/app.js?v=20260425-admin-compact-results-13"></script>
+  <script src="/static/app.js?v=20260425-admin-compact-results-14"></script>
 </body>
 </html>
