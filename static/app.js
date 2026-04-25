@@ -1344,6 +1344,7 @@ function renderCitizenPrimaryInfo(item) {
     item.citizen_id_number ? ["CCCD", item.citizen_id_number] : null,
     personal.date_of_birth ? ["Sinh", personal.date_of_birth] : null,
     item.phone ? ["S\u0110T", item.phone] : null,
+    personal.neighborhood ? ["Khu phố", personal.neighborhood] : null,
   ].filter(Boolean);
 
   return `
