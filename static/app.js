@@ -1697,7 +1697,6 @@ function renderDetailPanelPersonal(item) {
         ["Dân tộc", personal.ethnicity],
         ["Tôn giáo", personal.religion],
         ["Quốc tịch", personal.nationality],
-      ]) + renderLongTextList([
         ["Khen thưởng", personal.reward_record],
         ["Kỷ luật", personal.discipline_record],
       ]))}
