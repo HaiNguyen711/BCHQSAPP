@@ -1340,6 +1340,7 @@ function renderCompactBlock(title, content) {
 function renderCitizenPrimaryInfo(item) {
   const personal = item.payload?.personal_basic || {};
   const name = item.full_name || personal.birth_name || "C\u00f4ng d\u00e2n ch\u01b0a r\u00f5 t\u00ean";
+  const nameClass = getAdminPersonNameClass(name);
   const meta = [
     item.citizen_id_number ? ["CCCD", item.citizen_id_number] : null,
     personal.date_of_birth ? ["Sinh", personal.date_of_birth] : null,
@@ -1349,7 +1350,7 @@ function renderCitizenPrimaryInfo(item) {
 
   return `
     <div class="admin-person-summary">
-      <div class="admin-person-summary__name">${escapeHtml(name)}</div>
+      <div class="admin-person-summary__name ${nameClass}">${escapeHtml(name)}</div>
       <div class="admin-person-summary__meta">
         ${meta.map(([label, value]) => `
           <div class="admin-person-summary__line">
@@ -1360,6 +1361,23 @@ function renderCitizenPrimaryInfo(item) {
       </div>
     </div>
   `;
+}
+
+function getAdminPersonNameClass(name) {
+  const length = Array.from(String(name || "")).length;
+  if (length >= 38) {
+    return "admin-person-summary__name--tiny";
+  }
+  if (length >= 32) {
+    return "admin-person-summary__name--xxs";
+  }
+  if (length >= 26) {
+    return "admin-person-summary__name--xs";
+  }
+  if (length >= 22) {
+    return "admin-person-summary__name--sm";
+  }
+  return "";
 }
 
 function renderCitizenLocationInfo(item) {

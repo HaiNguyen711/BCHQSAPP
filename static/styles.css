@@ -1020,8 +1020,23 @@ pre {
   font-weight: 800;
   color: #351612;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.admin-person-summary__name--sm {
+  font-size: 16px;
+}
+
+.admin-person-summary__name--xs {
+  font-size: 15px;
+}
+
+.admin-person-summary__name--xxs {
+  font-size: 14px;
+}
+
+.admin-person-summary__name--tiny {
+  font-size: 13px;
 }
 
 .admin-person-summary__meta {
