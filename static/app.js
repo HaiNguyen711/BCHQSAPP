@@ -9,7 +9,7 @@ const state = {
   adminInterestItems: [],
   adminCitizenIdFilter: "",
   adminPage: 1,
-  adminPageSize: 10,
+  adminPageSize: 20,
   adminTotalItems: 0,
   adminTotalPages: 1,
   currentAdminModalItem: null,
@@ -21,7 +21,7 @@ const state = {
 
 window.state = state;
 
-const ACTIVE_FORM_CODES = new Set(["1", "2"]);
+const ACTIVE_FORM_CODES = new Set(["1"]);
 const NEIGHBORHOOD_OPTIONS = [
   "Hoa L\u01b0",
   "Quanh Vinh",
@@ -82,6 +82,8 @@ const FORM_DESCRIPTIONS = {
   "5": "Mục Sĩ quan dự bị đang phát triển. Hệ thống sẽ ghi nhận nhu cầu này cho admin.",
 };
 
+FORM_DESCRIPTIONS["2"] = "M\u1ee5c Ph\u00fac tra NVQS \u0111ang ph\u00e1t tri\u1ec3n. H\u1ec7 th\u1ed1ng s\u1ebd ghi nh\u1eadn nhu c\u1ea7u n\u00e0y cho admin.";
+
 document.addEventListener("DOMContentLoaded", async () => {
   const page = document.body.dataset.page;
   if (page === "form") {
@@ -107,6 +109,7 @@ window.addEventListener("pageshow", () => {
 async function bootFormPage() {
   state.formOptions = Array.isArray(window.APP_BOOTSTRAP?.formOptions) ? window.APP_BOOTSTRAP.formOptions : [];
   closeReviewModal();
+  syncLandingIntro();
 
   const response = await fetch("/api/form-schema?v=20260421-2", { cache: "no-store" });
   state.schema = await response.json();
@@ -120,6 +123,14 @@ async function bootFormPage() {
     setSelectedForm(initialFormCode, false);
     window.setTimeout(() => scrollToActiveFormCard(), 120);
   }
+}
+
+function syncLandingIntro() {
+  const intro = document.querySelector(".hero__intro");
+  if (!intro) {
+    return;
+  }
+  intro.textContent = "Hiện tại chỉ mở luồng Đăng ký NVQS, các mục 2, 3, 4, 5 đang trong giai đoạn phát triển.";
 }
 
 function wireFormEvents() {
@@ -982,7 +993,7 @@ async function loadAdminData() {
 
   const params = new URLSearchParams({
     page: String(state.adminPage || 1),
-    page_size: String(state.adminPageSize || 10),
+    page_size: String(state.adminPageSize || 20),
   });
   if (state.adminCitizenIdFilter) {
     params.set("q", state.adminCitizenIdFilter);
@@ -1004,7 +1015,7 @@ async function loadAdminData() {
   state.adminItems = submissions.items || [];
   state.adminInterestItems = Array.from({ length: summary.total_interest_logs || 0 });
   state.adminPage = submissions.page || 1;
-  state.adminPageSize = submissions.page_size || 10;
+  state.adminPageSize = submissions.page_size || 20;
   state.adminTotalItems = submissions.total_items || 0;
   state.adminTotalPages = submissions.total_pages || 1;
 
@@ -1051,8 +1062,8 @@ function renderAdminTableWrap() {
   messageEl.className = "form-message";
 }
 
-function renderAdminTrackingWrap() {
-  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingTable(state.adminInterestItems);
+function renderAdminTrackingWrap(summary) {
+  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingOverview(summary || {});
 }
 
 function getFilteredAdminItems() {
@@ -1192,7 +1203,7 @@ function renderSummaryListItems(items) {
 
 function renderAdminTable(items) {
   if (!items.length) {
-    return "<p>Chưa có phiếu nào được gửi.</p>";
+    return "<p>Ch\u01b0a c\u00f3 phi\u1ebfu n\u00e0o ph\u00f9 h\u1ee3p.</p>";
   }
 
   const rows = items.map((item) => `
@@ -1200,11 +1211,7 @@ function renderAdminTable(items) {
       <td class="admin-table__id">${item.id}</td>
       <td><span class="form-chip">${escapeHtml(item.form_label || item.form_code || "-")}</span></td>
       <td>${renderCitizenPrimaryInfo(item)}</td>
-      <td>${renderCitizenLocationInfo(item)}</td>
-      <td>${renderCitizenFamilyInfo(item)}</td>
-      <td>${renderCitizenTimelineInfo(item)}</td>
       <td class="admin-table__date">${escapeHtml(formatDateTime(item.created_at))}</td>
-      <td>${renderCitizenSummaryDetails(item)}</td>
       <td class="admin-table__actions">${renderCitizenActions(item)}</td>
     </tr>
   `).join("");
@@ -1216,14 +1223,10 @@ function renderAdminTable(items) {
           <thead>
             <tr>
               <th>ID</th>
-              <th>Loại phiếu</th>
-              <th>Thông tin công dân</th>
-              <th>Địa bàn</th>
-              <th>Gia đình</th>
-              <th>Quá trình</th>
-              <th>Thời gian tạo</th>
-              <th>Tóm tắt</th>
-              <th>Tác vụ</th>
+              <th>Lo\u1ea1i phi\u1ebfu</th>
+              <th>Th\u00f4ng tin c\u00f4ng d\u00e2n</th>
+              <th>Th\u1eddi gian t\u1ea1o</th>
+              <th>T\u00e1c v\u1ee5</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -1232,6 +1235,7 @@ function renderAdminTable(items) {
       <div class="admin-record-cards">
         ${items.map((item) => renderAdminSubmissionCard(item)).join("")}
       </div>
+      ${renderAdminPagination()}
     </div>
   `;
 }
@@ -1276,10 +1280,6 @@ function renderAdminTrackingTable(items) {
   `;
 }
 
-function renderAdminTrackingWrap(summary) {
-  document.getElementById("adminTrackingWrap").innerHTML = renderAdminTrackingOverview(summary || {});
-}
-
 function renderAdminTrackingOverview(summary) {
   const statCards = [
     { label: "Tổng lượt tracking", value: summary.total_interest_logs || 0 },
@@ -1311,53 +1311,6 @@ function renderAdminTrackingOverview(summary) {
   `;
 }
 
-function renderAdminTable(items) {
-  if (!items.length) {
-    return "<p>Chưa có phiếu nào phù hợp.</p>";
-  }
-
-  const rows = items.map((item) => `
-    <tr>
-      <td class="admin-table__id">${item.id}</td>
-      <td><span class="form-chip">${escapeHtml(item.form_label || item.form_code || "-")}</span></td>
-      <td>${renderCitizenPrimaryInfo(item)}</td>
-      <td>${renderCitizenLocationInfo(item)}</td>
-      <td>${renderCitizenFamilyInfo(item)}</td>
-      <td>${renderCitizenTimelineInfo(item)}</td>
-      <td class="admin-table__date">${escapeHtml(formatDateTime(item.created_at))}</td>
-      <td>${renderCitizenSummaryDetails(item)}</td>
-      <td class="admin-table__actions">${renderCitizenActions(item)}</td>
-    </tr>
-  `).join("");
-
-  return `
-    <div class="admin-record-layout">
-      <div class="admin-record-table">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Loại phiếu</th>
-              <th>Thông tin công dân</th>
-              <th>Địa bàn</th>
-              <th>Gia đình</th>
-              <th>Quá trình</th>
-              <th>Thời gian tạo</th>
-              <th>Tóm tắt</th>
-              <th>Tác vụ</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>
-      <div class="admin-record-cards">
-        ${items.map((item) => renderAdminSubmissionCard(item)).join("")}
-      </div>
-      ${renderAdminPagination()}
-    </div>
-  `;
-}
-
 function renderAdminSubmissionCard(item) {
   return `
     <article class="admin-record-card">
@@ -1368,13 +1321,9 @@ function renderAdminSubmissionCard(item) {
         </div>
         <time>${escapeHtml(formatDateTime(item.created_at))}</time>
       </div>
-      <h4>${escapeHtml(item.full_name || "Công dân chưa rõ tên")}</h4>
+      <h4>${escapeHtml(item.full_name || "C\u00f4ng d\u00e2n ch\u01b0a r\u00f5 t\u00ean")}</h4>
       <div class="admin-record-card__sections">
-        ${renderCompactBlock("Công dân", renderCitizenPrimaryInfo(item))}
-        ${renderCompactBlock("Địa bàn", renderCitizenLocationInfo(item))}
-        ${renderCompactBlock("Gia đình", renderCitizenFamilyInfo(item))}
-        ${renderCompactBlock("Quá trình", renderCitizenTimelineInfo(item))}
-        ${renderCompactBlock("Tóm tắt", renderCitizenSummaryDetails(item))}
+        ${renderCompactBlock("C\u00f4ng d\u00e2n", renderCitizenPrimaryInfo(item))}
       </div>
       <div class="admin-record-card__footer">
         ${renderCitizenActions(item)}

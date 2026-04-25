@@ -42,7 +42,7 @@ from .database import (
 from .schema import load_schema
 
 SESSION_COOKIE_NAME = "bchqs_admin_session"
-SUPPORTED_FORM_CODES = {"1", "2"}
+SUPPORTED_FORM_CODES = {"1"}
 
 
 def render_template(name: str, context: dict[str, str]) -> bytes:
@@ -79,7 +79,7 @@ class AppHandler(BaseHTTPRequestHandler):
                 return
             query = parse_qs(parsed.query)
             page = self._parse_positive_int(query.get("page", ["1"])[0], default=1)
-            page_size = self._parse_positive_int(query.get("page_size", ["10"])[0], default=10)
+            page_size = self._parse_positive_int(query.get("page_size", ["20"])[0], default=20)
             search = query.get("q", [""])[0]
             self._send_json(list_submissions_page(page=page, page_size=page_size, search=search))
             return

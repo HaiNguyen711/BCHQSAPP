@@ -143,10 +143,10 @@ def list_submissions() -> list[dict[str, Any]]:
 
 def list_submissions_page(
     page: int = 1,
-    page_size: int = 10,
+    page_size: int = 20,
     search: str = "",
 ) -> dict[str, Any]:
-    safe_page_size = max(1, min(int(page_size or 10), 100))
+    safe_page_size = max(1, min(int(page_size or 20), 100))
     safe_page = max(1, int(page or 1))
     normalized_search = _normalize_search_text(search)
 
