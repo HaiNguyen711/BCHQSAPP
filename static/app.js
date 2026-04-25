@@ -1344,7 +1344,6 @@ function renderCitizenPrimaryInfo(item) {
     item.citizen_id_number ? ["CCCD", item.citizen_id_number] : null,
     personal.date_of_birth ? ["Sinh", personal.date_of_birth] : null,
     item.phone ? ["S\u0110T", item.phone] : null,
-    personal.neighborhood ? ["Khu phố", personal.neighborhood] : null,
   ].filter(Boolean);
 
   return `
@@ -1352,9 +1351,9 @@ function renderCitizenPrimaryInfo(item) {
       <div class="admin-person-summary__name">${escapeHtml(name)}</div>
       <div class="admin-person-summary__meta">
         ${meta.map(([label, value]) => `
-          <div class="admin-person-summary__item">
+          <div class="admin-person-summary__line">
             <span class="admin-person-summary__label">${escapeHtml(label)}</span>
-            <strong class="admin-person-summary__value">${escapeHtml(value)}</strong>
+            <span class="admin-person-summary__value">${escapeHtml(value)}</span>
           </div>
         `).join("")}
       </div>
