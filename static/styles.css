@@ -2265,8 +2265,60 @@ body.admin-modal-open {
     display: grid;
   }
 
-  .admin-record-card__sections,
-  .admin-record-card .admin-action-stack {
+  .admin-record-card {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 14px;
+    align-items: start;
+  }
+
+  .admin-record-card__head {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px 12px;
+  }
+
+  .admin-record-card__meta {
+    min-width: 0;
+    justify-content: flex-start;
+  }
+
+  .admin-record-card__head time {
+    grid-column: 2;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .admin-record-card__sections {
     grid-template-columns: 1fr;
+    grid-column: 1;
+  }
+
+  .admin-record-card .admin-action-stack {
+    grid-column: 2;
+    align-self: start;
+    justify-self: end;
+    width: auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .admin-record-card .admin-row-btn {
+    width: auto;
+    min-width: 0;
+    padding: 10px 14px;
+    white-space: nowrap;
+  }
+
+  .admin-record-card--tracking {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-record-card--tracking .admin-record-card__sections,
+  .admin-record-card--tracking .admin-action-stack {
+    grid-column: 1;
   }
 }
